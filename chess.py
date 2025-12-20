@@ -124,6 +124,25 @@ default_coords = {
 coords_hor = ["0","a", "b", "c", "d", "e", "f", "g", "h"]
 coords_ver = ["0","1", "2", "3", "4", "5", "6", "7", "8"]
 
+TURN_DATA = {
+    1: {
+        "name": "WHITE",
+        "opponent": "BLACK",
+        "pawn": wpawn,
+        "pieces": {wking, wqueen, wrook, wbishop, wknight, wpawn},
+        "direction": 1,
+        "next": 2
+    },
+    2: {
+        "name": "BLACK",
+        "opponent": "WHITE",
+        "pawn": bpawn,
+        "pieces": {bking, bqueen, brook, bbishop, bknight, bpawn},
+        "direction": -1,
+        "next": 1
+    }
+}
+
 #game start functions
 def game_info():
     print(f"""{highlight_color}\nCHESS {default_color}in {highlight_color}TERMINAL{default_color}\n\nHOW TO PLAY\n
@@ -135,18 +154,17 @@ Enter {highlight_color}exit{default_color} to exit or {highlight_color}restart{d
 Enter {highlight_color}save{default_color} to save the game state.""")
     
 def reset_everything():
-    global moves
-    global turn
-    global collisions
-    global piece
-    global new_piece
-    moves = 0
+    global moves, collisions, piece, new_piece, turn
     turn = 1
+    moves = 0
     collisions = 0
     piece = ""
     new_piece = ""
 
 def start_game():
+    #important global variables
+    global turn, moves
+
     #ask for game data    
     game_state_file = input("\nPress ENTER to start or enter save file name: ")
     game_state_file = game_state_file.lower()
@@ -195,6 +213,7 @@ def start_game():
                 if coord == "bpawn":
                     coords_list[n] = bpawn                                 
             coords_list.insert(0, "GROUND ZERO")
+
         coords = {
         "a1" : coords_list[1],
         "b1" : coords_list[2],
@@ -268,6 +287,7 @@ def start_game():
         "g8" : coords_list[63],
         "h8" : coords_list[64],           
     }
+        
         if coords != default_coords:
             print(f"\n[{game_state_file}] LOADED SUCCESSFULLY, STARTING GAME...")
     except FileNotFoundError:
@@ -350,6 +370,7 @@ def start_game():
 
     #handle move
     def play_move():
+        global moves
         capture_check()
         promotion_check()
         check_check()
@@ -360,9 +381,8 @@ def start_game():
         if promotion == 0:
             coords[end_coord] = piece
         if promotion == 1:
-            coords[end_coord] = new_piece    
-        global moves    
-        moves = moves + 1  
+            coords[end_coord] = new_piece        
+        moves = moves + 1
         move_summary() 
         show_board()
 
@@ -377,7 +397,7 @@ def start_game():
             print(f"\n- The {player} [{piece_name}] checks the [{opponent}] King!")   
         reset_afterturnchecks()      
 
-#convert pieces and piece names
+    #convert pieces and piece names
     def get_captured_piece_name():
         global captured_piece_name
         if coords[end_coord] == wpawn or coords[end_coord] == bpawn:
@@ -415,15 +435,14 @@ def start_game():
         if chosen_piece == "knight":
             new_piece = bknight   
 
-#after turn checks
+    #after turn checks
     def capture_check():  
         global capture  
         if coords[end_coord] != empty:
             capture = 1
 
     def promotion_check():
-        global promotion
-        global chosen_piece
+        global promotion, chosen_piece
         if coords[start_coord] == wpawn and end_coord[1] == "8":
             promotion = 1
             chosen_piece = input("Promote [Pawn] to: ")
@@ -457,11 +476,7 @@ def start_game():
 
     #reset checks, captures, promotions
     def reset_afterturnchecks():
-        global check
-        global capture
-        global checkmate
-        global stalemate
-        global promotion
+        global check, capture, checkmate, stalemate, promotion
         check = 0
         capture = 0
         checkmate = 0
@@ -528,267 +543,153 @@ def start_game():
     #game flow
     while True:
 
-    #WHITE
-        if turn == 1:
-            player = "WHITE"
-            opponent = "BLACK" 
-            move = str(input(f"{moves+1}) {player}'s turn: "))
-            move = move.lower()
-            #Operation commands
-            if move == "save":
-                save_game()
-                continue
-            if move == "quit" or move == "exit":
-                quit_game()
-                continue
-            if move == "restart":
-                restart_game()
-                continue
-            if len(move) != 4:
-                proper_form()
-                continue 
-            start_coord = f"{move[0]}{move[1]}"
-            end_coord = f"{move[2]}{move[3]}"
-            if start_coord == end_coord:
+        #load turn data
+        player_data = TURN_DATA[turn]
+        player = player_data["name"]
+        opponent = player_data["opponent"]
+        own_pieces = player_data["pieces"]
+        pawn_piece = player_data["pawn"]
+        direction = player_data["direction"]
+
+        #move string
+        move = str(input(f"{moves+1}) {player}'s turn: "))
+        move = move.lower()
+
+        #operation commands
+        if move == "save":
+            save_game()
+            continue
+        if move == "quit" or move == "exit":
+            quit_game()
+            continue
+        if move == "restart":
+            restart_game()
+            continue
+
+        #check for validity
+        if len(move) != 4:
+            proper_form()
+            continue 
+        start_coord = f"{move[0]}{move[1]}"
+        end_coord = f"{move[2]}{move[3]}"
+        if start_coord == end_coord:
+            not_viable()
+            continue
+        if start_coord in coords:
+            piece = coords[start_coord]
+        else:
+            proper_form()
+            continue
+        if piece not in own_pieces:
+            no_piece()
+            continue
+        if end_coord in coords:
+            end_coord_piece = coords[end_coord]
+            if end_coord_piece in own_pieces:
                 not_viable()
                 continue
-            if start_coord in coords:
-                piece = coords[start_coord]
+
+            #piece rules
             else:
-                proper_form()
-                continue
-            if piece == wking or piece == wbishop or piece == wpawn or piece == wqueen or piece == wrook or piece == wbishop or piece == wknight:
-                if end_coord in coords:
-                    end_coord_piece = coords[end_coord]
-                    if end_coord_piece == wking or end_coord_piece == wbishop or end_coord_piece == wpawn or end_coord_piece == wqueen or end_coord_piece == wrook or end_coord_piece == wbishop or end_coord_piece == wknight:
+
+                #king rules
+                if piece == wking or piece == bking:
+                    piece_name = "King"
+                    if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) <= 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) <= 1:
+                        play_move()
+                    else:
                         not_viable()
                         continue
+
+                #bishop rules
+                if piece == wbishop or piece == bbishop:
+                    piece_name = "Bishop"
+                    horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
+                    vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
+                    if abs(horizontal_change) == abs(vertical_change):
+                        change = abs(horizontal_change)
+                        collisions = 0
+                        diagonal_collision_check()
+                        if collisions <= 1:        
+                            play_move()
+                        else:
+                            not_viable() 
+                            continue  
                     else:
-                        #King rules
-                        if piece == wking:
-                            piece_name = "King"
-                            if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) <= 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) <= 1:
-                                play_move()
-                            else:
-                                not_viable()
-                                continue
-                        #Bishop rules
-                        if piece == wbishop:
-                            piece_name = "Bishop"
-                            horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                            vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                            if abs(horizontal_change) == abs(vertical_change):
-                                change = abs(horizontal_change)
-                                collisions = 0
-                                diagonal_collision_check()
-                                if collisions <= 1:        
-                                    play_move()
-                                else:
-                                    not_viable() 
-                                    continue  
-                            else:
-                                not_viable()
-                                continue 
-                        #Pawn rules
-                        if piece == wpawn:
-                            piece_name = "Pawn"
-                            if coords[end_coord] == empty and start_coord[0] == end_coord[0] and (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 1:
-                                play_move()
-                            elif coords[end_coord] == empty and start_coord[0] == end_coord[0] and coords_ver.index(start_coord[1]) == 2 and (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 2 and coords[f"{end_coord[0]}{int(end_coord[1])-1}"] == empty:
-                                play_move()
-                            elif (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 1 and abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and coords[end_coord] != empty:
-                                play_move()   
-                            else:
-                                not_viable()
-                                continue  
-                        #Knight rules
-                        if piece == wknight:
-                            piece_name = "Knight"
-                            if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 2:
-                                play_move()
-                            elif abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 2 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 1:    
-                                play_move()
-                            else:
-                                not_viable()
-                                continue
-                        #Rook rules    
-                        if piece == wrook:  
-                            piece_name = "Rook"
-                            if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
-                                horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                                vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                                collisions = 0
-                                collision_check()  
-                                if collisions <= 1:
-                                    play_move()
-                                else:
-                                    not_viable()
-                                    continue    
-                            else:
-                                not_viable()
-                                continue    
-                        #Queen rules
-                        if piece == wqueen:
-                            piece_name = "Queen"
-                            horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                            vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                            if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
-                                collisions = 0
-                                collision_check()  
-                                if collisions <= 1:
-                                    play_move()
-                                else:
-                                    not_viable()
-                                    continue
-                            elif abs(horizontal_change) == abs(vertical_change):
-                                change = abs(horizontal_change)
-                                collisions = 0
-                                diagonal_collision_check()
-                                if collisions <= 1:        
-                                    play_move()
-                                else:
-                                    not_viable()   
-                            else:
-                                not_viable()
-                                continue      
-                    turn = 2
-                else: 
-                    proper_form()
-                    continue     
-            else:
-                no_piece()
-                continue
-    
-    #BLACK
-        if turn == 2:
-            player = "BLACK" 
-            opponent = "WHITE"
-            move = str(input(f"{moves+1}) {player}'s turn: "))
-            move = move.lower()
-            #Operation commands
-            if move == "save":
-                save_game()
-                continue
-            if move == "quit" or move == "exit":
-                quit_game()
-                continue
-            if move == "restart":
-                restart_game()
-                continue
-            if len(move) != 4:
-                proper_form()
-                continue 
-            start_coord = f"{move[0]}{move[1]}"
-            end_coord = f"{move[2]}{move[3]}"
-            if start_coord == end_coord:
-                not_viable()
-                continue
-            if start_coord in coords:
-                piece = coords[start_coord]
-            else:
-                proper_form()
-                continue
-            if piece == bking or piece == bbishop or piece == bpawn or piece == bqueen or piece == brook or piece == bbishop or piece == bknight:
-                if end_coord in coords:
-                    end_coord_piece = coords[end_coord]
-                    if end_coord_piece == bking or end_coord_piece == bbishop or end_coord_piece == bpawn or end_coord_piece == bqueen or end_coord_piece == brook or end_coord_piece == bbishop or end_coord_piece == bknight: 
+                        not_viable()
+                        continue 
+
+                #pawn rules
+                if piece == wpawn or piece == bpawn:
+                    piece_name = "Pawn"
+                    if coords[end_coord] == empty and start_coord[0] == end_coord[0] and (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 1 * direction:
+                        play_move()
+                    elif coords[end_coord] == empty and start_coord[0] == end_coord[0] and coords_ver.index(start_coord[1]) == 4.5 - (2.5 * direction) and (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 2 * direction and coords[f"{end_coord[0]}{int(end_coord[1]) + (-1 * direction)}"] == empty:
+                        play_move()
+                    elif (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 1 * direction and abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and coords[end_coord] != empty:
+                        play_move()   
+                    else:
+                        not_viable()
+                        continue  
+
+                #knight rules
+                if piece == wknight or piece == bknight:
+                    piece_name = "Knight"
+                    if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 2:
+                        play_move()
+                    elif abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 2 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 1:    
+                        play_move()
+                    else:
                         not_viable()
                         continue
+
+                #rook rules    
+                if piece == wrook or piece == brook:  
+                    piece_name = "Rook"
+                    if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
+                        horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
+                        vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
+                        collisions = 0
+                        collision_check()  
+                        if collisions <= 1:
+                            play_move()
+                        else:
+                            not_viable()
+                            continue    
                     else:
-                        #King rules
-                        if piece == bking:
-                            piece_name = "King"
-                            if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) <= 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) <= 1:
-                                play_move()
-                            else:
-                                not_viable()
-                                continue
-                        #Bishop rules    
-                        if piece == bbishop:
-                            piece_name = "Bishop"
-                            horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                            vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                            if abs(horizontal_change) == abs(vertical_change):
-                                change = abs(horizontal_change)
-                                collisions = 0
-                                diagonal_collision_check()
-                                if collisions <= 1:        
-                                    play_move()
-                                else:
-                                    not_viable()
-                                    continue   
-                            else:
-                                not_viable()
-                                continue 
-                        #Pawn rules    
-                        if piece == bpawn:
-                            piece_name = "Pawn"
-                            if coords[end_coord] == empty and start_coord[0] == end_coord[0] and (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == -1:
-                                play_move()
-                            elif coords[end_coord] == empty and start_coord[0] == end_coord[0] and coords_ver.index(start_coord[1]) == 7 and (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == -2 and coords[f"{end_coord[0]}{int(end_coord[1])+1}"] == empty:
-                                play_move()
-                            elif (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == -1 and abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and coords[end_coord] != empty:
-                                play_move()   
-                            else:
-                                not_viable()
-                                continue 
-                        #Knight rules    
-                        if piece == bknight:
-                            piece_name = "Knight"
-                            if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 2:
-                                play_move()
-                            elif abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 2 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 1:    
-                                play_move()
-                            else:
-                                not_viable()
-                                continue
-                        #Rook rules    
-                        if piece == brook:  
-                            piece_name = "Rook"
-                            if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
-                                horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                                vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                                collisions = 0
-                                collision_check()
-                                if collisions <= 1:
-                                    play_move()
-                                else:
-                                    not_viable()
-                                    continue    
-                            else:
-                                not_viable()
-                                continue    
-                        #Queen rules    
-                        if piece == bqueen:
-                            piece_name = "Queen"
-                            horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                            vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                            if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
-                                collisions = 0
-                                collision_check() 
-                                if collisions <= 1:
-                                    play_move()
-                                else:
-                                    not_viable()
-                                    continue
-                            elif abs(horizontal_change) == abs(vertical_change):
-                                change = abs(horizontal_change)
-                                collisions = 0
-                                diagonal_collision_check()
-                                if collisions <= 1:        
-                                    play_move()
-                                else:
-                                    not_viable()   
-                            else:
-                                not_viable()
-                                continue      
-                    turn = 1
-                else: 
-                    proper_form()
-                    continue     
-            else:
-                no_piece()
-                continue
+                        not_viable()
+                        continue    
+
+                #queen rules
+                if piece == wqueen or piece == bqueen:
+                    piece_name = "Queen"
+                    horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
+                    vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
+                    if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
+                        collisions = 0
+                        collision_check()  
+                        if collisions <= 1:
+                            play_move()
+                        else:
+                            not_viable()
+                            continue
+                    elif abs(horizontal_change) == abs(vertical_change):
+                        change = abs(horizontal_change)
+                        collisions = 0
+                        diagonal_collision_check()
+                        if collisions <= 1:        
+                            play_move()
+                        else:
+                            not_viable()   
+                    else:
+                        not_viable()
+                        continue      
+        else: 
+            proper_form()
+            continue
+
+        turn = TURN_DATA[turn]["next"]
+        
 
 #start
 game_info()
