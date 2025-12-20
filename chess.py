@@ -6,6 +6,9 @@ save_path = f"{cwd}\saves"
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
+#reset color
+reset = u"\u001b[0m"
+
 #foreground colors
 red = u"\u001b[31;1m"
 blue = u"\u001b[34;1m"
@@ -14,9 +17,6 @@ magenta = u"\u001b[35;1m"
 yellow = u"\u001b[33;1m"
 white = u"\u001b[37;1m"
 black = u"\u001b[30;1m"
-
-#reset color
-reset = u"\u001b[0m"
 
 #background colors
 tile1 = u"\u001b[47;1m" #white
@@ -133,35 +133,28 @@ The last two characters should be the coordinate that you want to move the piece
 Example: {highlight_color}e2e4{default_color}\n
 Enter {highlight_color}exit{default_color} to exit or {highlight_color}restart{default_color} to restart.
 Enter {highlight_color}save{default_color} to save the game state.""")
+    
 def reset_everything():
-    #globalize everything here
     global moves
     global turn
     global collisions
     global piece
     global new_piece
-    #reset everything here
     moves = 0
     turn = 1
     collisions = 0
     piece = ""
     new_piece = ""
-def start_game():
-    #globalize everything here
-    global moves
-    global turn
-    global collisions
-    global piece
-    global new_piece
 
-#ask for game data    
+def start_game():
+    #ask for game data    
     game_state_file = input("\nPress ENTER to start or enter save file name: ")
     game_state_file = game_state_file.lower()
 
     if game_state_file[-4:] != ".txt":
         game_state_file = game_state_file + ".txt"
 
-#load game data
+    #load game data
     try: 
         file_name = game_state_file
         with open(f"saves\{file_name}", 'r') as file:
@@ -284,7 +277,7 @@ def start_game():
         turn = 1
         moves = 0
 
-#show board
+    #show board
     def show_board():
         print(f"""{default_color}
             ────────────────
@@ -300,7 +293,7 @@ def start_game():
             A B C D E F G H
             {default_color}""")
 
-#invalid move msgs
+    #invalid move msgs
     def proper_form():
         print(f"\nPlease enter a move in proper form. \nExample: {highlight_color}a1b1{default_color}\n")     
     def not_viable():
@@ -308,7 +301,7 @@ def start_game():
     def no_piece():
         print(f"\nYou do not have a piece in [{start_coord}].\n")
 
-#collision checks
+    #collision checks
     def diagonal_collision_check():
         global collisions
         if horizontal_change > 0 and vertical_change > 0: #direction 1
@@ -331,6 +324,7 @@ def start_game():
                 check_collision = coords[f"{coords_hor[coords_hor.index(start_coord[0])+n]}{coords_ver[coords_ver.index(start_coord[1])-n]}"]
                 if check_collision != empty:
                     collisions = collisions + 1 
+
     def collision_check():
         global collisions
         if horizontal_change > 0:
@@ -354,9 +348,8 @@ def start_game():
                 if check_collision != empty:
                     collisions = collisions + 1    
 
-#handle move
+    #handle move
     def play_move():
-        global moves
         capture_check()
         promotion_check()
         check_check()
@@ -367,10 +360,12 @@ def start_game():
         if promotion == 0:
             coords[end_coord] = piece
         if promotion == 1:
-            coords[end_coord] = new_piece        
+            coords[end_coord] = new_piece    
+        global moves    
         moves = moves + 1  
         move_summary() 
         show_board()
+
     def move_summary():
         if capture == 0: 
             print(f"\n- {player} plays [{piece_name}] to [{end_coord}].")
@@ -397,8 +392,8 @@ def start_game():
             captured_piece_name = "Queen" 
         if coords[end_coord] == wking or coords[end_coord] == bking:
             captured_piece_name = "King"
+
     def get_chosen_piece_white():
-        global chosen_piece
         global new_piece
         if chosen_piece == "queen":
             new_piece = wqueen
@@ -408,8 +403,8 @@ def start_game():
             new_piece = wbishop
         if chosen_piece == "knight":
             new_piece = wknight
+
     def get_chosen_piece_black():
-        global chosen_piece
         global new_piece
         if chosen_piece == "queen":
             new_piece = bqueen
@@ -425,6 +420,7 @@ def start_game():
         global capture  
         if coords[end_coord] != empty:
             capture = 1
+
     def promotion_check():
         global promotion
         global chosen_piece
@@ -446,17 +442,20 @@ def start_game():
                 chosen_piece = chosen_piece.lower()
             get_chosen_piece_black() 
             chosen_piece = chosen_piece.capitalize()     
+
     def check_check():
         global check
         #do smth
+
     def checkmate_check():
         global checkmate
         #do smth
+
     def stalemate_check():
         global stalemate
         #do smth
 
-#reset checks, captures, promotions
+    #reset checks, captures, promotions
     def reset_afterturnchecks():
         global check
         global capture
@@ -469,7 +468,7 @@ def start_game():
         stalemate = 0 
         promotion = 0  
 
-#game operations
+    #game operations
     def save_game():
         saved = 0
         while saved == 0:
@@ -511,20 +510,22 @@ def start_game():
                     print(f"""\nGame state successfully saved to [{file_name}.txt]. You can enter {highlight_color}exit{default_color} to exit.\n""")
             except FileExistsError:
                 print(f"\n[{file_name}.txt] already exists, please enter another name.")
-                continue    
+                continue  
+
     def quit_game():
         print("")
         exit()
+
     def restart_game():
         print("\nRestarting...")
         reset_everything()
         start_game()                  
 
-#reset variables and start by showing the board
+    #reset variables and start by showing the board
     reset_afterturnchecks()
     show_board()
 
-#game flow
+    #game flow
     while True:
 
     #WHITE
