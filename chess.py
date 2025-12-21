@@ -1,4 +1,4 @@
-#create save game folder
+#create saves folder
 import os
 cwd = os.getcwd()
 print(f"\n{cwd}")
@@ -162,6 +162,13 @@ def reset_everything():
     new_piece = ""
 
 def start_game():
+    #clear current-game folder
+    current_game_path = rf"{cwd}\current-game"
+    for file in os.listdir(current_game_path):
+        file_path = os.path.join(current_game_path, file)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
     #important global variables
     global turn, moves
 
@@ -299,6 +306,7 @@ def start_game():
 
     #show board
     def show_board():
+        save_game_state()
         print(f"""{default_color}
             ────────────────
         8 | {tile1}{coords['a8']} {tile2}{coords['b8']} {tile1}{coords['c8']} {tile2}{coords['d8']} {tile1}{coords['e8']} {tile2}{coords['f8']} {tile1}{coords['g8']} {tile2}{coords['h8']} {reset}{default_color} |
@@ -310,8 +318,7 @@ def start_game():
         2 | {tile1}{coords['a2']} {tile2}{coords['b2']} {tile1}{coords['c2']} {tile2}{coords['d2']} {tile1}{coords['e2']} {tile2}{coords['f2']} {tile1}{coords['g2']} {tile2}{coords['h2']} {reset}{default_color} |
         1 | {tile2}{coords['a1']} {tile1}{coords['b1']} {tile2}{coords['c1']} {tile1}{coords['d1']} {tile2}{coords['e1']} {tile1}{coords['f1']} {tile2}{coords['g1']} {tile1}{coords['h1']} {reset}{default_color} |
             ────────────────
-            A B C D E F G H
-            {default_color}""")
+            A B C D E F G H{default_color}\n""")
 
     #invalid move msgs
     def proper_form():
@@ -323,7 +330,6 @@ def start_game():
 
     #collision checks
     def diagonal_collision_check():
-        global collisions
         collisions = 0
         if horizontal_change > 0 and vertical_change > 0: #direction 1
             for n in range(change):
@@ -344,10 +350,9 @@ def start_game():
             for n in range(change):
                 check_collision = coords[f"{coords_hor[coords_hor.index(start_coord[0])+n]}{coords_ver[coords_ver.index(start_coord[1])-n]}"]
                 if check_collision != empty:
-                    collisions = collisions + 1 
-
+                    collisions = collisions + 1
+        return collisions
     def collision_check():
-        global collisions
         collisions = 0
         if horizontal_change > 0:
             for n in range(abs(horizontal_change)):
@@ -368,13 +373,95 @@ def start_game():
             for n in range(abs(vertical_change)):
                 check_collision = coords[f"{start_coord[0]}{coords_ver[coords_ver.index(start_coord[1])-n]}"]
                 if check_collision != empty:
-                    collisions = collisions + 1   
+                    collisions = collisions + 1  
+        return collisions
+
+    """#check for check
+    def check_check():
+
+        #get king coordinate
+        for i in coords:
+            if coords[i] == own_pieces[0]:
+                king_cd = i
+
+        #get covered cds
+        global collisions, piece
+        covered_cds = []
+        for s in coords:
+            piece = coords[s]
+            if piece != empty:
+                for e in coords:
+                    start_coord = s
+                    end_coord = e
+
+                    if s != e and e not in covered_cds:
+                        if piece == opponent_pieces[0]: #king
+                            if abs(coords_hor.index(s[0]) - coords_hor.index(e[0])) <= 1 and abs(coords_ver.index(s[1]) - coords_ver.index(e[1])) <= 1:
+                                if coords[e] not in opponent_pieces:
+                                    covered_cds.append(e)
+                        if piece == opponent_pieces[1]: #bishop
+                            horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
+                            vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
+                            if abs(horizontal_change) == abs(vertical_change):
+                                change = abs(horizontal_change)
+                                collisions = 0
+                                diagonal_collision_check()
+                                if collisions <= 1:
+                                    if coords[e] not in opponent_pieces:
+                                        covered_cds.append(e)
+                        if piece == opponent_pieces[2]: #pawn
+                            if (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 1 * -1 * direction and abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1:
+                                if coords[e] not in opponent_pieces:
+                                    covered_cds.append(e)
+                        if piece == opponent_pieces[3]: #knight
+                            if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 2:
+                                covered_cds.append(e)
+                            elif abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 2 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 1:    
+                                covered_cds.append(e)
+                        if piece == opponent_pieces[4]: #rook
+                            if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
+                                horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
+                                vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
+                                collisions = 0
+                                collision_check()  
+                                if collisions <= 1:
+                                    if coords[e] not in opponent_pieces:
+                                        covered_cds.append(e)
+                        if piece == opponent_pieces[5]: #queen
+                            horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
+                            vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
+                            if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
+                                collisions = 0
+                                collision_check()  
+                                if collisions <= 1:
+                                    if coords[e] not in opponent_pieces:
+                                        covered_cds.append(e)
+                            elif abs(horizontal_change) == abs(vertical_change):
+                                change = abs(horizontal_change)
+                                collisions = 0
+                                diagonal_collision_check()
+                                if collisions <= 1:        
+                                    if coords[e] not in opponent_pieces:
+                                        covered_cds.append(e)    
+
+        #check detection
+        global check
+        check = 0
+        if king_cd in covered_cds:
+            check = 1
+            if first_time == 1:
+                print(f"The {player} [King] is in check!\n")
+        else:
+            check = 0
+        return check"""
 
     #handle move
     def play_move():
-        global moves
+        global moves, previous1, previous2
         capture_check()
         promotion_check()
+        previous1 = coords[start_coord]
+        previous2 = coords[end_coord]
         coords[start_coord] = empty
         if capture == 1:
             get_captured_piece_name()
@@ -382,20 +469,21 @@ def start_game():
             coords[end_coord] = piece
         if promotion == 1:
             coords[end_coord] = new_piece        
-        moves = moves + 1
-        move_summary() 
-        show_board()
+
+    def revert_move():
+        global previous1, previous2
+        coords[start_coord] = previous1
+        coords[end_coord] = previous2
 
     def move_summary():
         if capture == 0: 
-            print(f"\n- {player} plays [{piece_name}] to [{end_coord}].")
+            print(f"- {player} plays [{piece_name}] to [{end_coord}].\n")
         elif capture == 1:
-            print(f"\n- {player} plays [{piece_name}] to [{end_coord}] and captures the [{captured_piece_name}]!")
+            print(f"- {player} plays [{piece_name}] to [{end_coord}] and captures the [{captured_piece_name}]!\n")
         if promotion == 1: 
-            print(f"- The {player} [{piece_name}] has been promoted to [{chosen_piece}]!")     
-        reset_afterturnchecks()      
+            print(f"- The {player} [{piece_name}] has been promoted to [{chosen_piece}]!\n")           
 
-    #convert pieces and piece names
+    #get piece names
     def get_captured_piece_name():
         global captured_piece_name
         if coords[end_coord] == wpawn or coords[end_coord] == bpawn:
@@ -409,8 +497,8 @@ def start_game():
         if coords[end_coord] == wqueen or coords[end_coord] == bqueen:
             captured_piece_name = "Queen" 
         if coords[end_coord] == wking or coords[end_coord] == bking:
-            captured_piece_name = "King"
-
+            captured_piece_name = "King" 
+        return captured_piece_name         
     def get_chosen_piece_white():
         global new_piece
         if chosen_piece == "queen":
@@ -421,7 +509,6 @@ def start_game():
             new_piece = wbishop
         if chosen_piece == "knight":
             new_piece = wknight
-
     def get_chosen_piece_black():
         global new_piece
         if chosen_piece == "queen":
@@ -432,6 +519,41 @@ def start_game():
             new_piece = bbishop
         if chosen_piece == "knight":
             new_piece = bknight   
+
+    #save game state
+    def save_game_state():
+        with open(rf"current-game\move{moves}.txt", "x") as file:
+            file.write(f"turn={turn}\nmoves={moves}")
+            for coord in coords:
+                coord_piece = coords[coord]
+                if coord_piece == empty:
+                    piece_name = "empty"
+                if coord_piece == wrook:
+                    piece_name = "wrook"
+                if coord_piece == wknight:
+                    piece_name = "wknight"
+                if coord_piece == wbishop:
+                    piece_name = "wbishop"
+                if coord_piece == wqueen:
+                    piece_name = "wqueen"
+                if coord_piece == wking:
+                    piece_name = "wking"
+                if coord_piece == wpawn:
+                    piece_name = "wpawn" 
+                if coord_piece == brook:
+                    piece_name = "brook"
+                if coord_piece == bknight:
+                    piece_name = "bknight"
+                if coord_piece == bbishop:
+                    piece_name = "bbishop"
+                if coord_piece == bqueen:
+                    piece_name = "bqueen"
+                if coord_piece == bking:
+                    piece_name = "bking"
+                if coord_piece == bpawn:
+                    piece_name = "bpawn"
+                line = coord + "=" + piece_name
+                file.write(f"\n{line}")
 
     #after turn checks
     def capture_check():  
@@ -522,13 +644,13 @@ def start_game():
         reset_everything()
         start_game()                  
 
-    #reset variables and start by showing the board
+    #reset variables and show the board first time
     reset_afterturnchecks()
     show_board()
 
     #game flow
     while True:
-    
+        
         #load turn data
         player_data = TURN_DATA[turn]
         player = player_data["name"]
@@ -537,84 +659,8 @@ def start_game():
         opponent_pieces = player_data["opponent_pieces"]
         direction = player_data["direction"]
 
-        #determine king positions
-        for i in coords:
-            if coords[i] == own_pieces[0]:
-                king_cd = i
-
-        #check covered coords
-        global collisions, piece
-        covered_cds = []
-
-        for s in coords:
-            piece = coords[s]
-            if piece != empty:
-                for e in coords:
-                    start_coord = s
-                    end_coord = e
-
-                    if s != e and e not in covered_cds:
-                        
-                        if piece == opponent_pieces[0]: #king
-                            if abs(coords_hor.index(s[0]) - coords_hor.index(e[0])) <= 1 and abs(coords_ver.index(s[1]) - coords_ver.index(e[1])) <= 1:
-                                if coords[e] not in opponent_pieces:
-                                    covered_cds.append(e)
-
-                        if piece == opponent_pieces[1]: #bishop
-                            horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                            vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                            if abs(horizontal_change) == abs(vertical_change):
-                                change = abs(horizontal_change)
-                                collisions = 0
-                                diagonal_collision_check()
-                                if collisions <= 1:
-                                    if coords[e] not in opponent_pieces:
-                                        covered_cds.append(e)
-
-                        if piece == opponent_pieces[2]: #pawn
-                            if (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 1 * -1 * direction and abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1:
-                                if coords[e] not in opponent_pieces:
-                                    covered_cds.append(e)
-
-                        if piece == opponent_pieces[3]: #knight
-                            if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 2:
-                                covered_cds.append(e)
-                            elif abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 2 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 1:    
-                                covered_cds.append(e)
-
-                        if piece == opponent_pieces[4]: #rook
-                            if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
-                                horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                                vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                                collisions = 0
-                                collision_check()  
-                                if collisions <= 1:
-                                    if coords[e] not in opponent_pieces:
-                                        covered_cds.append(e)
-
-                        if piece == opponent_pieces[5]: #queen
-                            horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
-                            vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                            if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
-                                collisions = 0
-                                collision_check()  
-                                if collisions <= 1:
-                                    if coords[e] not in opponent_pieces:
-                                        covered_cds.append(e)
-                            elif abs(horizontal_change) == abs(vertical_change):
-                                change = abs(horizontal_change)
-                                collisions = 0
-                                diagonal_collision_check()
-                                if collisions <= 1:        
-                                    if coords[e] not in opponent_pieces:
-                                        covered_cds.append(e)    
-
-        #check for check
-        check = 0
-        if king_cd in covered_cds:
-            check = 1
-        if check == 1: 
-            print(f"The {player} [King] is in check!\n")
+        """first_time = 1
+        check_check()"""
 
         #move string
         move = str(input(f"{moves+1}) {player}'s turn: "))
@@ -674,8 +720,7 @@ def start_game():
                     vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
                     if abs(horizontal_change) == abs(vertical_change):
                         change = abs(horizontal_change)
-                        collisions = 0
-                        diagonal_collision_check()
+                        collisions = diagonal_collision_check()
                         if collisions <= 1:        
                             play_move()
                         else:
@@ -715,8 +760,7 @@ def start_game():
                     if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
                         horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
                         vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
-                        collisions = 0
-                        collision_check()  
+                        collisions = collision_check()  
                         if collisions <= 1:
                             play_move()
                         else:
@@ -732,8 +776,7 @@ def start_game():
                     horizontal_change = coords_hor.index(end_coord[0]) - coords_hor.index(start_coord[0])
                     vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
                     if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
-                        collisions = 0
-                        collision_check()  
+                        collisions = collision_check()  
                         if collisions <= 1:
                             play_move()
                         else:
@@ -741,21 +784,32 @@ def start_game():
                             continue
                     elif abs(horizontal_change) == abs(vertical_change):
                         change = abs(horizontal_change)
-                        collisions = 0
-                        diagonal_collision_check()
+                        collisions = diagonal_collision_check()
                         if collisions <= 1:        
                             play_move()
                         else:
                             not_viable()   
+                            continue
                     else:
                         not_viable()
                         continue    
         else: 
             proper_form()
             continue
-
-        turn = TURN_DATA[turn]["next"]
         
+        """first_time = 0
+        check_check()"""
+
+        if check == 1:
+            revert_move()
+            not_viable()
+            continue
+
+        moves = moves + 1
+        show_board()
+        move_summary()
+        reset_afterturnchecks()
+        turn = TURN_DATA[turn]["next"]
 
 #start
 game_info()
