@@ -167,7 +167,11 @@ def reset_everything():
     new_piece = ""
 
 def start_game():
-    #clear current-game folder
+    #create current folder if doesnt exist
+    if not os.path.exists(current_folder_name):
+        os.makedirs(current_folder_name)
+        
+    #clear current folder
     current_game_path = rf"{cwd}\{current_folder_name}"
     for file in os.listdir(current_game_path):
         file_path = os.path.join(current_game_path, file)
