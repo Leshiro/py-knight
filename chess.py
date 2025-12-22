@@ -748,9 +748,14 @@ def game():
         viable_moves = find_viable_moves()
         if len(viable_moves) == 0:
             if check == 0:
-                print("stalemate")
+                print(f"It's a stalemate! [{player}] has no moves to play.\n") 
             elif check == 1:
-                print("checkmate")
+                print(f"Checkmate! [{opponent}] wins the game.\n")
+            choice = input("Do you want to play again? (yes/no): ").lower().strip()
+            if choice == "yes":
+                restart_game()
+            if choice == "no":
+                quit_game()
 
         #move string
         move = str(input(f"{moves+1}) {player}'s turn: "))
