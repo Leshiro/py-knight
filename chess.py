@@ -171,7 +171,7 @@ def start_game():
     current_game_path = rf"{cwd}\{current_folder_name}"
     for file in os.listdir(current_game_path):
         file_path = os.path.join(current_game_path, file)
-        if os.path.isfile(file_path):
+        if os.path.isfile(file_path) and file[:4] == "move":
             os.remove(file_path)
 
     #important global variables
