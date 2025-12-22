@@ -166,11 +166,11 @@ def reset_everything():
     piece = ""
     new_piece = ""
 
-def start_game():
+def game():
     #create current folder if doesnt exist
     if not os.path.exists(current_folder_name):
         os.makedirs(current_folder_name)
-        
+
     #clear current folder
     current_game_path = rf"{cwd}\{current_folder_name}"
     for file in os.listdir(current_game_path):
@@ -655,7 +655,7 @@ def start_game():
     def restart_game():
         print("\nRestarting...")
         reset_everything()
-        start_game()                  
+        game()                  
 
     #reset variables and show the board first time
     reset_afterturnchecks()
@@ -842,4 +842,4 @@ def start_game():
 #start
 game_info()
 reset_everything()
-start_game()      
+game()      
