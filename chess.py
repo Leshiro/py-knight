@@ -159,12 +159,9 @@ Enter {highlight_color}save{default_color} to save the game state.
 Enter {highlight_color}undo{default_color} to undo move.""")
     
 def reset_everything():
-    global turn, moves, collisions, piece, new_piece
+    global turn, moves
     turn = 1
     moves = 0
-    collisions = 0
-    piece = ""
-    new_piece = ""
 
 def game():
     #create current folder if doesnt exist
@@ -392,21 +389,29 @@ def game():
                     collisions = collisions + 1  
         return collisions
 
-    #handle move
-    def play_move():
+    #play move
+    def play_move(move):
+        stc = move[:2]
+        edc = move[2:]
         global moves, previous1, previous2, captured_piece_name
-        previous1 = coords[start_coord]
-        previous2 = coords[end_coord]
-        capture = capture_check()
-        promotion = promotion_check()
+        previous1 = coords[stc]
+        previous2 = coords[edc]
+        capture = capture_check(edc)
+        promotion = promotion_check(stc, edc)
         if capture == 1:
-            captured_piece_name = get_captured_piece_name()
+            captured_piece_name = get_captured_piece_name(edc)
         if promotion == 0:
-            coords[end_coord] = piece
+            coords[edc] = piece
         if promotion == 1:
-            coords[end_coord] = new_piece    
-        coords[start_coord] = empty      
+            coords[edc] = new_piece    
+        coords[stc] = empty      
 
+    #revert move
+    def revert_move():
+        coords[start_coord] = previous1
+        coords[end_coord] = previous2
+
+    #move summary
     def move_summary():
         if capture == 0: 
             print(f"- {player} plays [{piece_name}] to [{end_coord}].\n")
@@ -416,7 +421,7 @@ def game():
             print(f"- The {player} [{piece_name}] has been promoted to [{chosen_piece}]!\n")           
 
     #get piece names
-    def get_captured_piece_name():
+    def get_captured_piece_name(end_coord):
         if coords[end_coord] == wpawn or coords[end_coord] == bpawn:
             captured_piece_name = "Pawn"
         if coords[end_coord] == wrook or coords[end_coord] == brook:
@@ -486,8 +491,17 @@ def game():
                 line = coord + "=" + piece_name
                 file.write(f"\n{line}")
 
+    #reset checks, captures, promotions
+    def reset_afterturnchecks():
+        global check, capture, checkmate, stalemate, promotion
+        check = 0
+        capture = 0
+        checkmate = 0
+        stalemate = 0 
+        promotion = 0  
+
     #capture check
-    def capture_check():  
+    def capture_check(end_coord):  
         global capture  
         if coords[end_coord] != empty:
             capture = 1
@@ -496,7 +510,7 @@ def game():
         return capture
 
     #promotion check
-    def promotion_check():
+    def promotion_check(start_coord, end_coord):
         global chosen_piece
         promotion = 0
         if coords[start_coord] == wpawn and end_coord[1] == "8":
@@ -520,8 +534,7 @@ def game():
         return promotion  
 
     #check for check
-    def check_check():
-        global collisions, piece
+    def check_check(print_msg):
         nonlocal horizontal_change, vertical_change, change
 
         #get king coordinate
@@ -581,25 +594,84 @@ def game():
                                 if collisions <= 1:        
                                     if coords[e] not in opponent_pieces:
                                         covered_cds.append(e)    
-
         #check detection
         check = 0
         if king_cd in covered_cds:
             check = 1
-            if first_time == 1:
+            if print_msg == 1:
                 print(f"The {player} [King] is in check!")
         else:
             check = 0
         return check
 
-    #reset checks, captures, promotions
-    def reset_afterturnchecks():
-        global check, capture, checkmate, stalemate, promotion
-        check = 0
-        capture = 0
-        checkmate = 0
-        stalemate = 0 
-        promotion = 0  
+    #find viable moves
+    def find_viable_moves():
+        nonlocal horizontal_change, vertical_change, change, piece
+
+        #find playable moves
+        playable = []
+        for s in coords:
+            piece = coords[s]
+            if piece in own_pieces:
+                for e in coords:
+                    if s != e and e not in playable and coords[e] not in own_pieces:
+                        if piece == own_pieces[0]: #king
+                            if abs(coords_hor.index(s[0]) - coords_hor.index(e[0])) <= 1 and abs(coords_ver.index(s[1]) - coords_ver.index(e[1])) <= 1:
+                                playable.append(s+e)
+                        if piece == own_pieces[1]: #bishop
+                            horizontal_change = coords_hor.index(e[0]) - coords_hor.index(s[0])
+                            vertical_change = coords_ver.index(e[1]) - coords_ver.index(s[1])
+                            if abs(horizontal_change) == abs(vertical_change):
+                                change = abs(horizontal_change)
+                                collisions = diagonal_collision_check(s, e)
+                                if collisions <= 1:
+                                    playable.append(s+e)
+                        if piece == own_pieces[2]: #pawn
+                            if coords[e] == empty and s[0] == e[0] and (coords_ver.index(e[1]) - coords_ver.index(s[1])) == 1 * direction:
+                                playable.append(s+e)
+                            if coords[e] == empty and s[0] == e[0] and coords_ver.index(s[1]) == 4.5 - (2.5 * direction) and (coords_ver.index(e[1]) - coords_ver.index(s[1])) == 2 * direction and coords[f"{e[0]}{int(e[1]) + (-1 * direction)}"] == empty:
+                                playable.append(s+e)
+                            if (coords_ver.index(e[1]) - coords_ver.index(s[1])) == 1 * direction and abs(coords_hor.index(s[0]) - coords_hor.index(e[0])) == 1 and coords[e] != empty:
+                                playable.append(s+e) 
+                        if piece == own_pieces[3]: #knight
+                            if abs(coords_hor.index(s[0]) - coords_hor.index(e[0])) == 1 and abs(coords_ver.index(s[1]) - coords_ver.index(e[1])) == 2:
+                                playable.append(s+e)
+                            elif abs(coords_hor.index(s[0]) - coords_hor.index(e[0])) == 2 and abs(coords_ver.index(s[1]) - coords_ver.index(e[1])) == 1:    
+                                playable.append(s+e)
+                        if piece == own_pieces[4]: #rook
+                            if s[0] == e[0] or s[1] == e[1]:
+                                horizontal_change = coords_hor.index(e[0]) - coords_hor.index(s[0])
+                                vertical_change = coords_ver.index(e[1]) - coords_ver.index(s[1])
+                                collisions = collision_check(s, e)  
+                                if collisions <= 1:
+                                    playable.append(s+e)
+                        if piece == own_pieces[5]: #queen
+                            horizontal_change = coords_hor.index(e[0]) - coords_hor.index(s[0])
+                            vertical_change = coords_ver.index(e[1]) - coords_ver.index(s[1])
+                            if s[0] == e[0] or s[1] == e[1]:
+                                collisions = collision_check(s, e)  
+                                if collisions <= 1:
+                                    playable.append(s+e)
+                            elif abs(horizontal_change) == abs(vertical_change):
+                                change = abs(horizontal_change)
+                                collisions = diagonal_collision_check(s, e)
+                                if collisions <= 1:        
+                                    playable.append(s+e)  
+        viable = []
+        for move in playable:
+            #save previous state
+            stc_p = coords[move[:2]]
+            edc_p = coords[move[2:]]
+            #check if move escapes check
+            piece = stc_p
+            play_move(move)
+            check = check_check(0)
+            if check == 0:
+                viable.append(move)
+            #revert move
+            coords[move[:2]] = stc_p
+            coords[move[2:]] = edc_p
+        return viable
 
     #game operations
     def save_game():
@@ -661,7 +733,6 @@ def game():
 
     #game flow
     while True:
-
         #load turn data
         player_data = TURN_DATA[turn]
         player = player_data["name"]
@@ -671,8 +742,15 @@ def game():
         direction = player_data["direction"]
 
         #check if there's a check
-        first_time = 1
-        check = check_check()
+        check = check_check(1)
+
+        #checkmate / stalemate
+        viable_moves = find_viable_moves()
+        if len(viable_moves) == 0:
+            if check == 0:
+                print("stalemate")
+            elif check == 1:
+                print("checkmate")
 
         #move string
         move = str(input(f"{moves+1}) {player}'s turn: "))
@@ -698,8 +776,22 @@ def game():
                     break
             if file_exists == 0:
                 print("\nPrevious game state does not exist.\n")
+            else:
+                file = f"move{moves+1}.txt"
+                file_path = os.path.join(current_game_path, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
             continue
-        
+        if move == "viable":
+            viable_string = ""
+            for i in range(len(viable_moves)):
+                if i + 1 == len(viable_moves):
+                    viable_string = viable_string + (f"{highlight_color}{viable_moves[i]}{default_color}.")
+                else:
+                    viable_string = viable_string + (f"{highlight_color}{viable_moves[i]}{default_color}, ")
+            print(f"\nViable moves are;\n{viable_string}\n")
+            continue
+
         #check for validity
         if len(move) != 4:
             proper_form()
@@ -726,12 +818,11 @@ def game():
             
             #piece rules
             else:
-
                 #king rules
                 if piece == wking or piece == bking:
                     piece_name = "King"
                     if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) <= 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) <= 1:
-                        play_move()
+                        play_move(move)
                     else:
                         not_viable()
                         continue
@@ -745,38 +836,35 @@ def game():
                         change = abs(horizontal_change)
                         collisions = diagonal_collision_check(start_coord, end_coord)
                         if collisions <= 1:        
-                            play_move()
+                            play_move(move)
                         else:
                             not_viable() 
                             continue  
                     else:
                         not_viable()
                         continue 
-
                 #pawn rules
                 if piece == wpawn or piece == bpawn:
                     piece_name = "Pawn"
                     if coords[end_coord] == empty and start_coord[0] == end_coord[0] and (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 1 * direction:
-                        play_move()
+                        play_move(move)
                     elif coords[end_coord] == empty and start_coord[0] == end_coord[0] and coords_ver.index(start_coord[1]) == 4.5 - (2.5 * direction) and (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 2 * direction and coords[f"{end_coord[0]}{int(end_coord[1]) + (-1 * direction)}"] == empty:
-                        play_move()
+                        play_move(move)
                     elif (coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])) == 1 * direction and abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and coords[end_coord] != empty:
-                        play_move()   
+                        play_move(move)   
                     else:
                         not_viable()
                         continue  
-
                 #knight rules
                 if piece == wknight or piece == bknight:
                     piece_name = "Knight"
                     if abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 1 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 2:
-                        play_move()
+                        play_move(move)
                     elif abs(coords_hor.index(start_coord[0]) - coords_hor.index(end_coord[0])) == 2 and abs(coords_ver.index(start_coord[1]) - coords_ver.index(end_coord[1])) == 1:    
-                        play_move()
+                        play_move(move)
                     else:
                         not_viable()
                         continue
-
                 #rook rules    
                 if piece == wrook or piece == brook:  
                     piece_name = "Rook"
@@ -785,14 +873,13 @@ def game():
                         vertical_change = coords_ver.index(end_coord[1]) - coords_ver.index(start_coord[1])
                         collisions = collision_check(start_coord, end_coord)  
                         if collisions <= 1:
-                            play_move()
+                            play_move(move)
                         else:
                             not_viable()
                             continue    
                     else:
                         not_viable()
                         continue    
-
                 #queen rules
                 if piece == wqueen or piece == bqueen:
                     piece_name = "Queen"
@@ -801,7 +888,7 @@ def game():
                     if start_coord[0] == end_coord[0] or start_coord[1] == end_coord[1]:
                         collisions = collision_check(start_coord, end_coord)  
                         if collisions <= 1:
-                            play_move()
+                            play_move(move)
                         else:
                             not_viable()
                             continue
@@ -809,7 +896,7 @@ def game():
                         change = abs(horizontal_change)
                         collisions = diagonal_collision_check(start_coord, end_coord)
                         if collisions <= 1:        
-                            play_move()
+                            play_move(move)
                         else:
                             not_viable()   
                             continue
@@ -821,8 +908,7 @@ def game():
             continue
 
         #check if move escapes check, otherwise revert
-        first_time = 0
-        check = check_check()
+        check = check_check(0)
         if check == 1:
             coords[start_coord] = previous1
             coords[end_coord] = previous2
