@@ -1,8 +1,12 @@
+#folder names
+save_folder_name = "saves"
+current_folder_name = "current"
+
 #create saves folder
 import os
 cwd = os.getcwd()
 print(f"\n{cwd}")
-save_path = rf"{cwd}\saves"
+save_path = rf"{cwd}\{save_folder_name}"
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
@@ -151,7 +155,8 @@ The first two characters should be the coordinate of the piece you want to move.
 The last two characters should be the coordinate that you want to move the piece to.
 Example: {highlight_color}e2e4{default_color}\n
 Enter {highlight_color}exit{default_color} to exit or {highlight_color}restart{default_color} to restart.
-Enter {highlight_color}save{default_color} to save the game state.""")
+Enter {highlight_color}save{default_color} to save the game state.
+Enter {highlight_color}undo{default_color} to undo move.""")
     
 def reset_everything():
     global turn, moves, collisions, piece, new_piece
@@ -163,14 +168,14 @@ def reset_everything():
 
 def start_game():
     #clear current-game folder
-    current_game_path = rf"{cwd}\current-game"
+    current_game_path = rf"{cwd}\{current_folder_name}"
     for file in os.listdir(current_game_path):
         file_path = os.path.join(current_game_path, file)
         if os.path.isfile(file_path):
             os.remove(file_path)
 
     #important global variables
-    global turn, moves
+    global turn, moves, coords
 
     #ask for game data    
     game_state_file = input("\nPress ENTER to start or enter save file name: ")
@@ -179,10 +184,10 @@ def start_game():
     if game_state_file[-4:] != ".txt":
         game_state_file = game_state_file + ".txt"
 
-    #load game data
-    try: 
-        file_name = game_state_file
-        with open(rf"saves\{file_name}", 'r') as file:
+    #loader
+    def load_data(folder, file):
+        global coords, moves, turn
+        with open(rf"{folder}\{file}", 'r') as file:
             file_content = file.read()
             coords_list = file_content.split("\n")
             turn = int(coords_list[0].replace("turn=",""))
@@ -295,11 +300,18 @@ def start_game():
         "h8" : coords_list[64],           
     }
 
+    #load game data
+    try: 
+        load_data(save_folder_name, game_state_file)
         if coords != default_coords:
             print(f"\n[{game_state_file}] LOADED SUCCESSFULLY, STARTING GAME...")
     except FileNotFoundError:
-        if game_state_file != ".txt":
-            print("\nGAME STATE FILE COULD NOT BE FOUND, STARTING DEFAULT GAME...")
+        print("\nGAME STATE FILE COULD NOT BE FOUND, STARTING DEFAULT GAME...")
+        coords = default_coords
+        turn = 1
+        moves = 0
+    except:
+        print("\nGAME STATE FILE IS CORRUPTED, STARTING DEFAULT GAME...")
         coords = default_coords
         turn = 1
         moves = 0
@@ -439,7 +451,7 @@ def start_game():
 
     #save game state
     def save_game_state():
-        with open(rf"current-game\move{moves}.txt", "x") as file:
+        with open(rf"{current_folder_name}\move{moves}.txt", "x") as file:
             file.write(f"turn={turn}\nmoves={moves}")
             for coord in coords:
                 coord_piece = coords[coord]
@@ -570,8 +582,6 @@ def start_game():
         #check detection
         global check
         check = 0
-        print(king_cd)
-        print(covered_cds)
         if king_cd in covered_cds:
             check = 1
             if first_time == 1:
@@ -595,7 +605,7 @@ def start_game():
         while saved == 0:
             file_name = input("\nSave file name: ")
             try:
-                with open(rf"saves\{file_name}.txt", "x") as file:
+                with open(rf"{save_folder_name}\{file_name}.txt", "x") as file:
                     file.write(f"turn={turn}\nmoves={moves}")
                     for coord in coords:
                         coord_piece = coords[coord]
@@ -645,6 +655,7 @@ def start_game():
     #reset variables and show the board first time
     reset_afterturnchecks()
     show_board()
+    save_game_state()
 
     #game flow
     while True:
@@ -675,7 +686,18 @@ def start_game():
         if move == "restart":
             restart_game()
             continue
-
+        if move == "undo":
+            file_exists = 0
+            for file in os.listdir(current_game_path):
+                if file == f"move{moves-1}.txt":
+                    file_exists = 1
+                    load_data(current_folder_name, file)
+                    show_board()
+                    break
+            if file_exists == 0:
+                print("\nPrevious game state does not exist.\n")
+            continue
+        
         #check for validity
         if len(move) != 4:
             proper_form()
@@ -795,20 +817,13 @@ def start_game():
         else: 
             proper_form()
             continue
-        
-        show_board()
-        print(check)
 
         #check if move escapes check, otherwise revert
         first_time = 0
         check_check()
-        print(check)
         if check == 1:
-            print(previous1)
-            print(previous2)
             coords[start_coord] = previous1
             coords[end_coord] = previous2
-            show_board()
             not_viable()
             continue
 
@@ -822,4 +837,4 @@ def start_game():
 #start
 game_info()
 reset_everything()
-start_game()            
+start_game()      
