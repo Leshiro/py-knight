@@ -335,7 +335,7 @@ def game():
 
     #invalid move msgs
     def proper_form():
-        print(f"\nPlease enter a move in proper form. \nExample: {highlight_color}a1b1{default_color}\n")     
+        print(f"\nPlease enter a move in proper form. \nExample: {highlight_color}e2e4{default_color}\n")     
     def not_viable():
         print(f"\n{highlight_color}{move}{default_color} is not a viable move.\n")    
     def no_piece():
@@ -405,11 +405,6 @@ def game():
         if promotion == 1:
             coords[edc] = new_piece    
         coords[stc] = empty      
-
-    #revert move
-    def revert_move():
-        coords[start_coord] = previous1
-        coords[end_coord] = previous2
 
     #move summary
     def move_summary():
@@ -755,6 +750,8 @@ def game():
             if choice == "yes":
                 restart_game()
             if choice == "no":
+                quit_game()
+            else:
                 quit_game()
 
         #move string
