@@ -179,7 +179,7 @@ def start_game():
 
     #ask for game data    
     game_state_file = input("\nPress ENTER to start or enter save file name: ")
-    game_state_file = game_state_file.lower()
+    game_state_file = game_state_file.lower().strip()
 
     if game_state_file[-4:] != ".txt":
         game_state_file = game_state_file + ".txt"
@@ -306,7 +306,8 @@ def start_game():
         if coords != default_coords:
             print(f"\n[{game_state_file}] LOADED SUCCESSFULLY, STARTING GAME...")
     except FileNotFoundError:
-        print("\nGAME STATE FILE COULD NOT BE FOUND, STARTING DEFAULT GAME...")
+        if game_state_file != ".txt":   
+            print("\nGAME STATE FILE COULD NOT BE FOUND, STARTING DEFAULT GAME...")
         coords = default_coords
         turn = 1
         moves = 0
