@@ -33,7 +33,7 @@ board_color = white
 white_color = blue
 black_color = red
 
-#pieces and their colors
+#pieces
 empty = f"{board_color} {default_color}"
 
 wpawn = f"{white_color}♙{default_color}"
@@ -49,6 +49,9 @@ bknight = f"{black_color}♘{default_color}"
 bbishop = f"{black_color}♗{default_color}"
 bqueen = f"{black_color}♕{default_color}"
 bking = f"{black_color}♔{default_color}"
+
+pieces = [empty, wpawn, wrook, wknight, wbishop, wqueen, wking, bpawn, brook, bknight, bbishop, bqueen, bking]
+piece_values = ["empty", "wpawn", "wrook", "wknight", "wbishop", "wqueen", "wking", "bpawn", "brook", "bknight", "bbishop", "bqueen", "bking"]
 
 #default game coords
 default_coords = {
@@ -128,7 +131,7 @@ default_coords = {
 coords_hor = ["0","a", "b", "c", "d", "e", "f", "g", "h"]
 coords_ver = ["0","1", "2", "3", "4", "5", "6", "7", "8"]
 
-TURN_DATA = {
+PlayerData = {
     1: {
         "name": "WHITE",
         "opponent": "BLACK",
@@ -175,7 +178,7 @@ def game():
         if os.path.isfile(file_path) and file[:4] == "move":
             os.remove(file_path)
 
-    #important global variables
+    #global variables
     global turn, moves, coords
 
     #ask for game data    
@@ -198,108 +201,15 @@ def game():
             coords_list.remove(coords_list[0])
             coords_list.remove(coords_list[0])
             for n in range(len(coords_list)):
-                coord = coords_list[n][3:]    
-                if coord == "empty":
-                    coords_list[n] = empty
-                if coord == "wrook":
-                    coords_list[n] = wrook
-                if coord == "wknight":
-                    coords_list[n] = wknight
-                if coord == "wbishop":
-                    coords_list[n] = wbishop
-                if coord == "wqueen":
-                    coords_list[n] = wqueen
-                if coord == "wking":
-                    coords_list[n] = wking
-                if coord == "wpawn":
-                    coords_list[n] = wpawn 
-                if coord == "brook":
-                    coords_list[n] = brook
-                if coord == "bknight":
-                    coords_list[n] = bknight
-                if coord == "bbishop":
-                    coords_list[n] = bbishop
-                if coord == "bqueen":
-                    coords_list[n] = bqueen
-                if coord == "bking":
-                    coords_list[n] = bking
-                if coord == "bpawn":
-                    coords_list[n] = bpawn                                 
-            coords_list.insert(0, "GROUND ZERO")
+                coord = coords_list[n][3:]
+                i = piece_values.index(coord)
+                coords_list[n] = pieces[i]                               
+            coords_list.insert(0, "START")
 
-        coords = {
-        "a1" : coords_list[1],
-        "b1" : coords_list[2],
-        "c1" : coords_list[3],
-        "d1" : coords_list[4],
-        "e1" : coords_list[5],
-        "f1" : coords_list[6],
-        "g1" : coords_list[7],
-        "h1" : coords_list[8],
-
-        "a2" : coords_list[9],
-        "b2" : coords_list[10],
-        "c2" : coords_list[11],
-        "d2" : coords_list[12],
-        "e2" : coords_list[13],
-        "f2" : coords_list[14],
-        "g2" : coords_list[15],
-        "h2" : coords_list[16],
-
-        "a3" : coords_list[17],
-        "b3" : coords_list[18],
-        "c3" : coords_list[19],
-        "d3" : coords_list[20],
-        "e3" : coords_list[21],
-        "f3" : coords_list[22],
-        "g3" : coords_list[23],
-        "h3" : coords_list[24],
-
-        "a4" : coords_list[25],
-        "b4" : coords_list[26],
-        "c4" : coords_list[27],
-        "d4" : coords_list[28],
-        "e4" : coords_list[29],
-        "f4" : coords_list[30],
-        "g4" : coords_list[31],
-        "h4" : coords_list[32], 
-
-        "a5" : coords_list[33],
-        "b5" : coords_list[34],
-        "c5" : coords_list[35],
-        "d5" : coords_list[36],
-        "e5" : coords_list[37],
-        "f5" : coords_list[38],
-        "g5" : coords_list[39],
-        "h5" : coords_list[40],   
-
-        "a6" : coords_list[41],
-        "b6" : coords_list[42],
-        "c6" : coords_list[43],
-        "d6" : coords_list[44],
-        "e6" : coords_list[45],
-        "f6" : coords_list[46],
-        "g6" : coords_list[47],
-        "h6" : coords_list[48],    
-                
-        "a7" : coords_list[49],
-        "b7" : coords_list[50],
-        "c7" : coords_list[51],
-        "d7" : coords_list[52],
-        "e7" : coords_list[53],
-        "f7" : coords_list[54],
-        "g7" : coords_list[55],
-        "h7" : coords_list[56],
-
-        "a8" : coords_list[57],
-        "b8" : coords_list[58],
-        "c8" : coords_list[59],
-        "d8" : coords_list[60],
-        "e8" : coords_list[61],
-        "f8" : coords_list[62],
-        "g8" : coords_list[63],
-        "h8" : coords_list[64],           
-    }
+        coords = {}
+        for i in range(1, 9):
+            for a in range(1, 9):
+                coords[f"{coords_hor[a]}{coords_ver[i]}"] = coords_list[(i - 1) * 8 + a]
 
     #load game data
     try: 
@@ -406,6 +316,16 @@ def game():
             coords[edc] = new_piece    
         coords[stc] = empty      
 
+    #try move
+    def try_move(move):
+        stc = move[:2]
+        edc = move[2:]
+        global moves, previous1, previous2, captured_piece_name
+        previous1 = coords[stc]
+        previous2 = coords[edc]
+        coords[edc] = piece
+        coords[stc] = empty
+
     #move summary
     def move_summary():
         if capture == 0: 
@@ -413,43 +333,19 @@ def game():
         elif capture == 1:
             print(f"- {player} plays [{piece_name}] to [{end_coord}] and captures the [{captured_piece_name}]!\n")
         if promotion == 1: 
-            print(f"- The {player} [{piece_name}] has been promoted to [{chosen_piece}]!\n")           
+            print(f"- The {player} [{piece_name}] has been promoted to [{chosen_piece.capitalize()}]!\n")           
 
-    #get piece names
+    #captured piece name
     def get_captured_piece_name(end_coord):
-        if coords[end_coord] == wpawn or coords[end_coord] == bpawn:
-            captured_piece_name = "Pawn"
-        if coords[end_coord] == wrook or coords[end_coord] == brook:
-            captured_piece_name = "Rook"
-        if coords[end_coord] == wknight or coords[end_coord] == bknight:
-            captured_piece_name = "Knight"
-        if coords[end_coord] == wbishop or coords[end_coord] == bbishop:
-            captured_piece_name = "Bishop"
-        if coords[end_coord] == wqueen or coords[end_coord] == bqueen:
-            captured_piece_name = "Queen" 
-        if coords[end_coord] == wking or coords[end_coord] == bking:
-            captured_piece_name = "King" 
+        i = pieces.index(coords[end_coord])
+        captured_piece_name = piece_values[i][1:].capitalize()
         return captured_piece_name
-    def get_chosen_piece_white():
+    
+    #chosen piece for promotion
+    def get_chosen_piece(color):
         global new_piece
-        if chosen_piece == "queen":
-            new_piece = wqueen
-        if chosen_piece == "rook":
-            new_piece = wrook
-        if chosen_piece == "bishop":
-            new_piece = wbishop
-        if chosen_piece == "knight":
-            new_piece = wknight
-    def get_chosen_piece_black():
-        global new_piece
-        if chosen_piece == "queen":
-            new_piece = bqueen
-        if chosen_piece == "rook":
-            new_piece = brook
-        if chosen_piece == "bishop":
-            new_piece = bbishop
-        if chosen_piece == "knight":
-            new_piece = bknight   
+        i = piece_values.index(color + chosen_piece)
+        new_piece = pieces[i]
 
     #save game state
     def save_game_state():
@@ -457,32 +353,8 @@ def game():
             file.write(f"turn={turn}\nmoves={moves}")
             for coord in coords:
                 coord_piece = coords[coord]
-                if coord_piece == empty:
-                    piece_name = "empty"
-                if coord_piece == wrook:
-                    piece_name = "wrook"
-                if coord_piece == wknight:
-                    piece_name = "wknight"
-                if coord_piece == wbishop:
-                    piece_name = "wbishop"
-                if coord_piece == wqueen:
-                    piece_name = "wqueen"
-                if coord_piece == wking:
-                    piece_name = "wking"
-                if coord_piece == wpawn:
-                    piece_name = "wpawn" 
-                if coord_piece == brook:
-                    piece_name = "brook"
-                if coord_piece == bknight:
-                    piece_name = "bknight"
-                if coord_piece == bbishop:
-                    piece_name = "bbishop"
-                if coord_piece == bqueen:
-                    piece_name = "bqueen"
-                if coord_piece == bking:
-                    piece_name = "bking"
-                if coord_piece == bpawn:
-                    piece_name = "bpawn"
+                i = pieces.index(coord_piece)
+                piece_name = piece_values[i]
                 line = coord + "=" + piece_name
                 file.write(f"\n{line}")
 
@@ -508,25 +380,17 @@ def game():
     def promotion_check(start_coord, end_coord):
         global chosen_piece
         promotion = 0
-        if coords[start_coord] == wpawn and end_coord[1] == "8":
+        if (coords[start_coord] == wpawn and end_coord[1] == "8") or (coords[start_coord] == bpawn and end_coord[1] == "1"):
             promotion = 1
             chosen_piece = input("Promote [Pawn] to: ")
             chosen_piece = chosen_piece.lower()
             while chosen_piece != "queen" and chosen_piece != "bishop" and chosen_piece != "rook" and chosen_piece != "knight":
-                chosen_piece = input("Please enter a valid piece name (queen/rook/bishop/knight): ")
-                chosen_piece = chosen_piece.lower()
-            get_chosen_piece_white()
-            chosen_piece = chosen_piece.capitalize()  
-        if coords[start_coord] == bpawn and end_coord[1] == "1":
-            promotion = 1
-            chosen_piece = input("Promote [Pawn] to: ")
-            chosen_piece = chosen_piece.lower()
-            while chosen_piece != "queen" and chosen_piece != "bishop" and chosen_piece != "rook" and chosen_piece != "knight":
-                chosen_piece = input("Please enter a valid piece name (queen/rook/bishop/knight): ")
-                chosen_piece = chosen_piece.lower()
-            get_chosen_piece_black() 
-            chosen_piece = chosen_piece.capitalize()
-        return promotion  
+                chosen_piece = input("Please enter a valid piece name (queen/rook/bishop/knight): ").strip().lower()
+            if coords[start_coord] == wpawn:
+                get_chosen_piece("w") 
+            if coords[start_coord] == bpawn:
+                get_chosen_piece("b") 
+        return promotion
 
     #check for check
     def check_check(print_msg):
@@ -659,7 +523,7 @@ def game():
             edc_p = coords[move[2:]]
             #check if move escapes check
             piece = stc_p
-            play_move(move)
+            try_move(move)
             check = check_check(0)
             if check == 0:
                 viable.append(move)
@@ -678,32 +542,8 @@ def game():
                     file.write(f"turn={turn}\nmoves={moves}")
                     for coord in coords:
                         coord_piece = coords[coord]
-                        if coord_piece == empty:
-                            piece_name = "empty"
-                        if coord_piece == wrook:
-                            piece_name = "wrook"
-                        if coord_piece == wknight:
-                            piece_name = "wknight"
-                        if coord_piece == wbishop:
-                            piece_name = "wbishop"
-                        if coord_piece == wqueen:
-                            piece_name = "wqueen"
-                        if coord_piece == wking:
-                            piece_name = "wking"
-                        if coord_piece == wpawn:
-                            piece_name = "wpawn" 
-                        if coord_piece == brook:
-                            piece_name = "brook"
-                        if coord_piece == bknight:
-                            piece_name = "bknight"
-                        if coord_piece == bbishop:
-                            piece_name = "bbishop"
-                        if coord_piece == bqueen:
-                            piece_name = "bqueen"
-                        if coord_piece == bking:
-                            piece_name = "bking"
-                        if coord_piece == bpawn:
-                            piece_name = "bpawn"
+                        i = pieces.index(coord_piece)
+                        piece_name = piece_values[i]
                         line = coord + "=" + piece_name
                         file.write(f"\n{line}")
                     saved = 1
@@ -729,7 +569,7 @@ def game():
     #game flow
     while True:
         #load turn data
-        player_data = TURN_DATA[turn]
+        player_data = PlayerData[turn]
         player = player_data["name"]
         opponent = player_data["opponent"]
         own_pieces = player_data["pieces"]
@@ -922,7 +762,7 @@ def game():
         show_board()
         move_summary()
         reset_afterturnchecks()
-        turn = TURN_DATA[turn]["next"]
+        turn = PlayerData[turn]["next"]
 
 #start
 game_info()
