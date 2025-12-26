@@ -5,13 +5,6 @@ import os
 save_folder = "saves"
 current_folder = "current"
 
-#create saves folder
-cwd = os.getcwd()
-print(f"\n{cwd}")
-save_path = rf"{cwd}\{save_folder}"
-if not os.path.exists(save_path):
-    os.makedirs(save_path)
-
 #colors
 reset = u"\u001b[0m"
 red = u"\u001b[31;1m"
@@ -112,6 +105,21 @@ def load_data(folder, file):
                 coords[f"{coords_hor[a]}{coords_ver[i]}"] = coords_list[(i - 1) * 8 + a]
         return coords
 
+#show board
+def show_board():
+    print(f"""{default_color}
+        ────────────────
+    8 | {tile1}{coords['a8']} {tile2}{coords['b8']} {tile1}{coords['c8']} {tile2}{coords['d8']} {tile1}{coords['e8']} {tile2}{coords['f8']} {tile1}{coords['g8']} {tile2}{coords['h8']} {reset}{default_color} |
+    7 | {tile2}{coords['a7']} {tile1}{coords['b7']} {tile2}{coords['c7']} {tile1}{coords['d7']} {tile2}{coords['e7']} {tile1}{coords['f7']} {tile2}{coords['g7']} {tile1}{coords['h7']} {reset}{default_color} |
+    6 | {tile1}{coords['a6']} {tile2}{coords['b6']} {tile1}{coords['c6']} {tile2}{coords['d6']} {tile1}{coords['e6']} {tile2}{coords['f6']} {tile1}{coords['g6']} {tile2}{coords['h6']} {reset}{default_color} |
+    5 | {tile2}{coords['a5']} {tile1}{coords['b5']} {tile2}{coords['c5']} {tile1}{coords['d5']} {tile2}{coords['e5']} {tile1}{coords['f5']} {tile2}{coords['g5']} {tile1}{coords['h5']} {reset}{default_color} |
+    4 | {tile1}{coords['a4']} {tile2}{coords['b4']} {tile1}{coords['c4']} {tile2}{coords['d4']} {tile1}{coords['e4']} {tile2}{coords['f4']} {tile1}{coords['g4']} {tile2}{coords['h4']} {reset}{default_color} |
+    3 | {tile2}{coords['a3']} {tile1}{coords['b3']} {tile2}{coords['c3']} {tile1}{coords['d3']} {tile2}{coords['e3']} {tile1}{coords['f3']} {tile2}{coords['g3']} {tile1}{coords['h3']} {reset}{default_color} |
+    2 | {tile1}{coords['a2']} {tile2}{coords['b2']} {tile1}{coords['c2']} {tile2}{coords['d2']} {tile1}{coords['e2']} {tile2}{coords['f2']} {tile1}{coords['g2']} {tile2}{coords['h2']} {reset}{default_color} |
+    1 | {tile2}{coords['a1']} {tile1}{coords['b1']} {tile2}{coords['c1']} {tile1}{coords['d1']} {tile2}{coords['e1']} {tile1}{coords['f1']} {tile2}{coords['g1']} {tile1}{coords['h1']} {reset}{default_color} |
+        ────────────────
+        A B C D E F G H{default_color}\n""")
+
 #invalid move msgs
 def proper_form():
     print(f"\nPlease enter a move in proper form. \nExample: {highlight_color}e2e4{default_color}\n")     
@@ -194,20 +202,7 @@ def ghost_move(move):
     coords[edc] = piece
     coords[stc] = empty
 
-#prints
-def show_board():
-    print(f"""{default_color}
-        ────────────────
-    8 | {tile1}{coords['a8']} {tile2}{coords['b8']} {tile1}{coords['c8']} {tile2}{coords['d8']} {tile1}{coords['e8']} {tile2}{coords['f8']} {tile1}{coords['g8']} {tile2}{coords['h8']} {reset}{default_color} |
-    7 | {tile2}{coords['a7']} {tile1}{coords['b7']} {tile2}{coords['c7']} {tile1}{coords['d7']} {tile2}{coords['e7']} {tile1}{coords['f7']} {tile2}{coords['g7']} {tile1}{coords['h7']} {reset}{default_color} |
-    6 | {tile1}{coords['a6']} {tile2}{coords['b6']} {tile1}{coords['c6']} {tile2}{coords['d6']} {tile1}{coords['e6']} {tile2}{coords['f6']} {tile1}{coords['g6']} {tile2}{coords['h6']} {reset}{default_color} |
-    5 | {tile2}{coords['a5']} {tile1}{coords['b5']} {tile2}{coords['c5']} {tile1}{coords['d5']} {tile2}{coords['e5']} {tile1}{coords['f5']} {tile2}{coords['g5']} {tile1}{coords['h5']} {reset}{default_color} |
-    4 | {tile1}{coords['a4']} {tile2}{coords['b4']} {tile1}{coords['c4']} {tile2}{coords['d4']} {tile1}{coords['e4']} {tile2}{coords['f4']} {tile1}{coords['g4']} {tile2}{coords['h4']} {reset}{default_color} |
-    3 | {tile2}{coords['a3']} {tile1}{coords['b3']} {tile2}{coords['c3']} {tile1}{coords['d3']} {tile2}{coords['e3']} {tile1}{coords['f3']} {tile2}{coords['g3']} {tile1}{coords['h3']} {reset}{default_color} |
-    2 | {tile1}{coords['a2']} {tile2}{coords['b2']} {tile1}{coords['c2']} {tile2}{coords['d2']} {tile1}{coords['e2']} {tile2}{coords['f2']} {tile1}{coords['g2']} {tile2}{coords['h2']} {reset}{default_color} |
-    1 | {tile2}{coords['a1']} {tile1}{coords['b1']} {tile2}{coords['c1']} {tile1}{coords['d1']} {tile2}{coords['e1']} {tile1}{coords['f1']} {tile2}{coords['g1']} {tile1}{coords['h1']} {reset}{default_color} |
-        ────────────────
-        A B C D E F G H{default_color}\n""")
+#move summary
 def move_summary():
     if capture == 0: 
         print(f"- {player} plays [{piece_name}] to [{end_coord}].\n")
@@ -225,7 +220,7 @@ def afterturn_reset():
     stalemate = 0 
     promotion = 0  
 
-#checks
+#event checks
 def capture_check(end_coord):  
     global capture  
     if coords[end_coord] != empty:
@@ -411,7 +406,7 @@ def quit_game():
     exit()
 def restart_game():
     print("\nRestarting...")
-    game()                  
+    game_start()                  
 def save_current_state():
     with open(rf"{current_folder}\move{moves}.txt", "x") as file:
         file.write(f"turn={turn}\nmoves={moves}")
@@ -526,7 +521,6 @@ def move_flow():
                 else:
                     not_viable()
                     return
-
             #bishop rules
             if piece == wbishop or piece == bbishop:
                 piece_name = "Bishop"
@@ -623,11 +617,18 @@ def move_flow():
     turn = PlayerData[turn]["next"]
 
 #game
-def game():
-    #create current folder if doesnt exist
+def game_start():
+    
+    #create saves folder
+    cwd = os.getcwd()
+    save_path = rf"{cwd}\{save_folder}"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
+    #create current folder
     if not os.path.exists(current_folder):
         os.makedirs(current_folder)
-
+        
     #clear current folder
     global current_game_path
     current_game_path = rf"{cwd}\{current_folder}"
@@ -672,4 +673,4 @@ def game():
 
 #run
 game_info()
-game()      
+game_start()      
