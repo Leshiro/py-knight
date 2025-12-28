@@ -218,12 +218,13 @@ def find_viable_moves():
 
                     if piece == own_pieces[0]: #king
                         if coords[e] == own_pieces[4]: #castling
-                            passes_collision = collision_check(s, e)
-                            if passes_collision:
-                                if abs(dx) == 3:
-                                    playable.append(s+e + " (O-O)")
-                                if abs(dx) == 4:
-                                    playable.append(s+e + " (O-O-O)")
+                            if (s[0] == "e")  and (e[0] in ["a", "h"] and e[1] in ["1", "8"]):
+                                passes_collision = collision_check(s, e)
+                                if passes_collision:
+                                    if abs(dx) == 3:
+                                        playable.append(s+e + " (O-O)")
+                                    if abs(dx) == 4:
+                                        playable.append(s+e + " (O-O-O)")
                         else:
                             if abs(dx) <= 1 and abs(dy) <= 1:
                                 playable.append(s+e)
