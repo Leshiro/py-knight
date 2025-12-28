@@ -1,10 +1,43 @@
 import engine
+import game
 import pygame
 import tkinter as tk
 
-title = "Chess Alpha"
-minimum = 180
-charpixel = 6
+config = game
+
+title = config.title
+minimum = config.window_minimum
+charpixel = config.charpixel
+
+piece_set = config.piece_set
+
+LIGHT = config.LIGHT
+DARK  = config.DARK
+
+UI_COLOR = config.UI_COLOR
+LEGAL_MOVES_COLOR = config.LEGAL_MOVES_COLOR
+CHECKMATE_COLOR = config.CHECKMATE_COLOR
+SELECTION_COLOR = config.SELECTION_COLOR
+
+BOARD_SIZE = config.BOARD_SIZE
+UI_HEIGHT = config.UI_HEIGHT
+SQ = BOARD_SIZE // 8
+SIZE = BOARD_SIZE + UI_HEIGHT
+
+SEPARATOR = config.SEPARATOR
+BOARD_2_X = BOARD_SIZE + SEPARATOR
+
+WINDOW_WIDTH = BOARD_SIZE + BOARD_2_X
+WINDOW_HEIGHT = BOARD_SIZE + UI_HEIGHT
+
+BUTTON_W = config.BUTTON_W
+BUTTON_H = config.BUTTON_H
+
+GAP = config.GAP
+
+UI_Y = BOARD_SIZE
+UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
+START_X = config.START_X
 
 def ask_string(title, label):
     result = {"value": None}
@@ -110,29 +143,6 @@ def notify(title, label):
 
     root.mainloop()
 
-LIGHT = (238, 210, 183)
-DARK  = (160, 110, 70)
-UI_COLOR = (30, 30, 30)
-LEGAL_MOVES_COLOR = (50, 180, 50, 120)
-
-BOARD_SIZE = 640
-SQ = BOARD_SIZE // 8
-UI_HEIGHT = 70
-SIZE = BOARD_SIZE + UI_HEIGHT
-
-SEPARATOR = 15
-BOARD_2_X = BOARD_SIZE + SEPARATOR
-
-WINDOW_WIDTH = BOARD_SIZE + BOARD_2_X
-WINDOW_HEIGHT = BOARD_SIZE + UI_HEIGHT
-
-BUTTON_W = 100
-BUTTON_H = 35
-GAP = 15
-UI_Y = BOARD_SIZE
-UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
-start_x = 20
-
 pygame.init()
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
@@ -148,12 +158,9 @@ SOUNDS = {
     "promote": pygame.mixer.Sound("assets/sounds/promote.mp3"),
 }
 
-def end_notify_reset():
+def Start_Game(save=None):
     global end_notified
     end_notified = 0
-
-def Start_Game(save=None):
-    end_notify_reset()
     message = engine.load_game(save)
     return message
 
@@ -194,7 +201,7 @@ PIECE_TO_IMAGE = {
 def load_images():
     images = {}
     for name in PIECE_TO_IMAGE.values():
-        img = pygame.image.load(f"assets/pieces/{name}.png").convert_alpha()
+        img = pygame.image.load(f"assets/pieces/{piece_set}/{name}.png").convert_alpha()
         images[name] = pygame.transform.smoothscale(img, (SQ, SQ))
     return images
 
@@ -255,7 +262,8 @@ def confirm_undo():
     confirm = ask_yes_no(title, "Undo move?")
     if confirm == True:
         exists = engine.undo_move()
-        end_notify_reset()
+        global end_notified
+        end_notified = 0
         if exists == 1:
             SOUNDS["move"].play()
         else:
@@ -271,11 +279,11 @@ def confirm_quit():
     if confirm == True:
         exit()
 
-save_button = Button((start_x, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
-load_button = Button((start_x + BUTTON_W + GAP, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
-undo_button = Button((start_x + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Undo", lambda: confirm_undo())
-restart_button = Button((start_x + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
-quit_button = Button((start_x + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
+save_button = Button((START_X, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
+load_button = Button((START_X + BUTTON_W + GAP, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
+undo_button = Button((START_X + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Undo", lambda: confirm_undo())
+restart_button = Button((START_X + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
+quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
 
 def end_check(popup=0, print=False):
     player_data = engine.PlayerData[engine.turn]
@@ -312,7 +320,7 @@ def make_move(move):
     is_capture = engine.coords[edc] in opponent_pieces
     is_promotion = engine.promotion_check(stc, edc)
     if is_promotion:
-        new_piece = ask_string(title, "Promote pawn to: ")
+        new_piece = ask_string(title, "Promote pawn to: ").strip().lower()
         engine.try_move(move, new_piece)
     else:
         engine.try_move(move)
@@ -332,7 +340,6 @@ def make_move(move):
         SOUNDS["promote"].play()
     else:
         SOUNDS["move"].play()
-
     return is_end
 
 def square_to_screen(square, offset_x, flipped):
@@ -386,7 +393,7 @@ def draw_selection_at(offset_x, flipped):
         return
 
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
-    overlay.fill((200, 50, 50, 120))
+    overlay.fill(SELECTION_COLOR)
 
     x, y = square_to_screen(selected_square, offset_x, flipped)
     screen.blit(overlay, (x, y))
@@ -396,7 +403,7 @@ def draw_checkmate_at(offset_x, flipped):
     own_pieces = player_data["pieces"]
     selected_square = engine.get_king_cd(own_pieces)
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
-    overlay.fill((30, 144, 255, 150))
+    overlay.fill(CHECKMATE_COLOR)
 
     x, y = square_to_screen(selected_square, offset_x, flipped)
     screen.blit(overlay, (x, y))
