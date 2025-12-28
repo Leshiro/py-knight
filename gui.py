@@ -92,7 +92,7 @@ def notify(title, label):
 
     root = tk.Tk()
     root.title(title)
-    root.geometry(f"{size}x80")
+    root.geometry(f"{size}x85")
     root.resizable(False, False)
 
     #center window
@@ -103,8 +103,8 @@ def notify(title, label):
     y = (root.winfo_screenheight() - h) // 2
     root.geometry(f"{w}x{h}+{x}+{y}")
 
-    tk.Label(root, text=label, font=("Arial", 12)).pack(padx=10, pady=(10, 5))
-    tk.Button(root, text="OK", command=close).pack(pady=(0, 5))
+    tk.Label(root, text=label, font=("Arial", 12)).pack(padx=10, pady=(10, 10))
+    tk.Button(root, text="OK", command=close).pack(pady=(0, 10))
 
     root.bind("<Return>", lambda event: close())
 
@@ -148,7 +148,12 @@ SOUNDS = {
     "promote": pygame.mixer.Sound("assets/sounds/promote.mp3"),
 }
 
+def end_notify_reset():
+    global end_notified
+    end_notified = 0
+
 def Start_Game(save=None):
+    end_notify_reset()
     message = engine.load_game(save)
     return message
 
@@ -250,6 +255,7 @@ def confirm_undo():
     confirm = ask_yes_no(title, "Undo move?")
     if confirm == True:
         exists = engine.undo_move()
+        end_notify_reset()
         if exists == 1:
             SOUNDS["move"].play()
         else:
@@ -271,10 +277,24 @@ undo_button = Button((start_x + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, 
 restart_button = Button((start_x + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
 quit_button = Button((start_x + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
 
-def make_move(move):
+def end_check(popup=0, print=False):
     player_data = engine.PlayerData[engine.turn]
     player = player_data["name"]
     opponent = player_data["opponent"]
+    is_check = engine.check_check(0)
+    mate = engine.mate_check(is_check, print)
+    end = False
+    if mate != 0:
+        end = True
+        if popup == 1:
+            if mate == 1:
+                notify(title, f"Checkmate! [{opponent}] wins the game.")
+            if mate == 2:
+                notify(title, f"Stalemate! [{player}] has no moves to play.")
+    return end
+
+def make_move(move):
+    player_data = engine.PlayerData[engine.turn]
     own_pieces = player_data["pieces"]
     opponent_pieces = player_data["opponent_pieces"]
 
@@ -297,20 +317,13 @@ def make_move(move):
     else:
         engine.try_move(move)
     is_check = engine.check_check(0)
+    is_end = end_check(0)
 
     #sounds
-    if is_check == 1:
-        opposite_turn = engine.PlayerData[engine.turn]["next"]
-        opposite_check = engine.check_check(0, opposite_turn)
-        mate = engine.mate_check(opposite_check)
-        if mate != 0:
-            SOUNDS["end"].play()
-            if mate == 1:
-                notify(title, f"Checkmate! [{player}] wins the game.")
-            if mate == 2:
-                notify(title, f"Stalemate! [{opponent}] has no moves to play.")
-        else:
-            SOUNDS["check"].play()
+    if is_end:
+        SOUNDS["end"].play()
+    elif is_check == 1:
+        SOUNDS["check"].play()
     elif is_capture:
         SOUNDS["capture"].play()
     elif is_castle:
@@ -319,6 +332,8 @@ def make_move(move):
         SOUNDS["promote"].play()
     else:
         SOUNDS["move"].play()
+
+    return is_end
 
 def square_to_screen(square, offset_x, flipped):
     file = ord(square[0]) - ord('a')
@@ -376,6 +391,16 @@ def draw_selection_at(offset_x, flipped):
     x, y = square_to_screen(selected_square, offset_x, flipped)
     screen.blit(overlay, (x, y))
 
+def draw_checkmate_at(offset_x, flipped):
+    player_data = engine.PlayerData[engine.turn]
+    own_pieces = player_data["pieces"]
+    selected_square = engine.get_king_cd(own_pieces)
+    overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
+    overlay.fill((30, 144, 255, 150))
+
+    x, y = square_to_screen(selected_square, offset_x, flipped)
+    screen.blit(overlay, (x, y))
+
 def get_legal_targets(from_sq):
     targets = []
     viable_moves = engine.find_viable_moves()
@@ -392,23 +417,32 @@ def draw_legal_moves_at(offset_x, flipped):
         x, y = square_to_screen(sq, offset_x, flipped)
         screen.blit(overlay, (x, y))
 
-def draw():
+def draw(end):
     screen.fill((0, 0, 0))
-
-    #white board
+ 
+    #boards
     draw_board_at(0, flipped=False)
-    draw_legal_moves_at(0, flipped=False)
-    draw_selection_at(0, flipped=False)
-    draw_pieces_at(0, flipped=False)
-    
-    #black board
     draw_board_at(BOARD_2_X, flipped=True)
+
+    #legal moves
+    draw_legal_moves_at(0, flipped=False)
     draw_legal_moves_at(BOARD_2_X, flipped=True)
+
+    #selection
+    draw_selection_at(0, flipped=False)
     draw_selection_at(BOARD_2_X, flipped=True)
+
+    #checkmate
+    if end:
+        draw_checkmate_at(0, flipped=False)
+        draw_checkmate_at(BOARD_2_X, flipped=True)
+    
+    #pieces (last)
+    draw_pieces_at(0, flipped=False)
     draw_pieces_at(BOARD_2_X, flipped=True)
 
     #SEPARATOR
-    pygame.draw.line( screen, UI_COLOR, ((BOARD_SIZE + BOARD_2_X) // 2, 0), ((BOARD_SIZE + BOARD_2_X) // 2, BOARD_SIZE), SEPARATOR)
+    pygame.draw.line(screen, UI_COLOR, ((BOARD_SIZE + BOARD_2_X) // 2, 0), ((BOARD_SIZE + BOARD_2_X) // 2, BOARD_SIZE), SEPARATOR)
     # UI bar
     pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
 
@@ -425,6 +459,10 @@ selected_square = None
 legal_targets = []
 
 while running:
+    if end_notified == 0:
+        end = end_check(1, True)
+        if end:
+            end_notified = 1
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -451,8 +489,7 @@ while running:
             # second click → attempt move
             else:
                 if square in legal_targets:
-                    make_move(selected_square + square)
-
+                    end = make_move(selected_square + square)
                 # reset selection
                 selected_square = None
                 legal_targets = []
@@ -463,6 +500,6 @@ while running:
     restart_button.update()
     quit_button.update()
 
-    draw()
+    draw(end)
 
 pygame.quit()

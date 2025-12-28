@@ -130,18 +130,28 @@ def promotion_check(stc, edc):
         promotion = 1
     return promotion
 
-def mate_check(check):
+def mate_check(check, printmsg=False):
     viable_moves = find_viable_moves()
     if len(viable_moves) == 0:
         if check == 0:
             mate = 2
-            print(f"Stalemate! [{player}] has no moves to play.\n") 
+            if printmsg:
+                print(f"Stalemate! [{player}] has no moves to play.\n") 
         elif check == 1:
             mate = 1
-            print(f"Checkmate! [{opponent}] wins the game.\n")
+            if printmsg:
+                print(f"Checkmate! [{opponent}] wins the game.\n")
     else:
         mate = 0
     return mate
+
+#get king coordinate
+def get_king_cd(pieces):
+    for i in coords:
+        if coords[i] == pieces[0]:
+            king_cd = i
+            break
+    return king_cd
 
 def check_check(print_msg, turn_given=None):
     if turn_given != None:
@@ -153,10 +163,7 @@ def check_check(print_msg, turn_given=None):
     direction = player_data["direction"]
 
     #get king coordinate
-    for i in coords:
-        if coords[i] == own_pieces[0]:
-            king_cd = i
-            break
+    king_cd = get_king_cd(own_pieces)
 
     #get covered cds
     covered_cds = []
@@ -216,7 +223,7 @@ def check_check(print_msg, turn_given=None):
     return check
 
 #viable moves
-def find_viable_moves():
+def find_viable_moves(stc=None):
     global piece
     player_data = PlayerData[turn]
     own_pieces = player_data["pieces"]
@@ -446,11 +453,7 @@ def try_move(input, promoted_to=None):
 
     #get move
     move = input
-
-    #check if viable
-    viable_moves = find_viable_moves()
-    if move in viable_moves:
-        play_move(move, promoted_to)
+    play_move(move, promoted_to)
 
     #next turn
     turn = PlayerData[turn]["next"]
