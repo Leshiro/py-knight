@@ -3,8 +3,8 @@ import pygame
 import tkinter as tk
 
 title = "Chess Alpha"
-minimum = 200
-charpixel = 5
+minimum = 180
+charpixel = 6
 
 def ask_string(title, label):
     result = {"value": None}
@@ -57,7 +57,7 @@ def ask_yes_no(title, message):
         
     root = tk.Tk()
     root.title(title)
-    root.geometry(f"{size}x100")
+    root.geometry(f"{size}x90")
     root.resizable(False, False)
 
     # center window
@@ -71,7 +71,7 @@ def ask_yes_no(title, message):
     tk.Label(root, text=message, font=("Arial", 12)).pack(pady=10)
 
     frame = tk.Frame(root)
-    frame.pack(pady=10)
+    frame.pack(pady=(5, 0))
 
     tk.Button(frame, text="Yes", width=10, command=yes).pack(side="left", padx=10)
     tk.Button(frame, text="No", width=10, command=no).pack(side="right", padx=10)
@@ -87,12 +87,12 @@ def notify(title, label):
     def close():
         root.destroy()
 
-    text_size = len(label) * charpixel
+    text_size = len(label) * int(charpixel // 1.5)
     size = minimum + text_size
 
     root = tk.Tk()
     root.title(title)
-    root.geometry(f"{size}x120")
+    root.geometry(f"{size}x80")
     root.resizable(False, False)
 
     #center window
@@ -103,8 +103,8 @@ def notify(title, label):
     y = (root.winfo_screenheight() - h) // 2
     root.geometry(f"{w}x{h}+{x}+{y}")
 
-    tk.Label(root, text=label, font=("Arial", 12)).pack(pady=10)
-    tk.Button(root, text="OK", command=close).pack(pady=10)
+    tk.Label(root, text=label, font=("Arial", 12)).pack(padx=10, pady=(10, 5))
+    tk.Button(root, text="OK", command=close).pack(pady=(0, 5))
 
     root.bind("<Return>", lambda event: close())
 
@@ -133,10 +133,27 @@ UI_Y = BOARD_SIZE
 UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
 start_x = 20
 
-engine.load_game()
 pygame.init()
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
+
+SOUNDS = {
+    "start": pygame.mixer.Sound("assets/sounds/game-start.mp3"),
+    "end": pygame.mixer.Sound("assets/sounds/game-end.mp3"),
+    "move": pygame.mixer.Sound("assets/sounds/move.mp3"),
+    "capture": pygame.mixer.Sound("assets/sounds/capture.mp3"),
+    "undo": pygame.mixer.Sound("assets/sounds/move.mp3"),
+    "check": pygame.mixer.Sound("assets/sounds/check.mp3"),
+    "castle": pygame.mixer.Sound("assets/sounds/castle.mp3"),
+    "promote": pygame.mixer.Sound("assets/sounds/promote.mp3"),
+}
+
+def Start_Game(save=None):
+    message = engine.load_game(save)
+    return message
+
+Start_Game()
+SOUNDS["start"].play()
 
 font = pygame.font.SysFont(None, 28)
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -153,14 +170,6 @@ pygame.draw.rect(
 
 selected_square = None
 running = True
-
-SOUNDS = {
-    "move": pygame.mixer.Sound("assets/sounds/move.mp3"),
-    "capture": pygame.mixer.Sound("assets/sounds/capture.mp3"),
-    "undo": pygame.mixer.Sound("assets/sounds/move.mp3"),
-    "check": pygame.mixer.Sound("assets/sounds/check.mp3"),
-    "castle": pygame.mixer.Sound("assets/sounds/castle.mp3")
-}
 
 PIECE_TO_IMAGE = {
     engine.wpawn: "wpawn",
@@ -232,9 +241,10 @@ def save_game_dialog():
 def load_game_dialog():
     file_name = ask_string(title, "Load save file:")
     if file_name:
-        message = engine.load_game(file_name)
+        message = Start_Game(file_name)
         if message != None:
             notify(title, message)
+        SOUNDS["start"].play()
 
 def confirm_undo():
     confirm = ask_yes_no(title, "Undo move?")
@@ -248,12 +258,12 @@ def confirm_undo():
 def confirm_restart():
     confirm = ask_yes_no(title, "Restart game?")
     if confirm == True:
-        engine.restart_game()
+        Start_Game()
 
 def confirm_quit():
     confirm = ask_yes_no(title, "Quit game?")
     if confirm == True:
-        engine.quit_game()
+        exit()
 
 save_button = Button((start_x, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
 load_button = Button((start_x + BUTTON_W + GAP, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
@@ -263,6 +273,7 @@ quit_button = Button((start_x + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, 
 
 def make_move(move):
     player_data = engine.PlayerData[engine.turn]
+    player = player_data["name"]
     opponent = player_data["opponent"]
     own_pieces = player_data["pieces"]
     opponent_pieces = player_data["opponent_pieces"]
@@ -281,21 +292,33 @@ def make_move(move):
     is_capture = engine.coords[edc] in opponent_pieces
     is_promotion = engine.promotion_check(stc, edc)
     if is_promotion:
-        new_piece = ask_string(title, "Promote pawn to: ", 270)
+        new_piece = ask_string(title, "Promote pawn to: ")
         engine.try_move(move, new_piece)
     else:
         engine.try_move(move)
-    is_check = engine.check_check(0) == 1
+    is_check = engine.check_check(0)
+
     #sounds
-    if is_check:
-        SOUNDS["check"].play()
-    if is_castle:
-        SOUNDS["castle"].play()
-    else:
-        if is_capture:
-            SOUNDS["capture"].play()
+    if is_check == 1:
+        opposite_turn = engine.PlayerData[engine.turn]["next"]
+        opposite_check = engine.check_check(0, opposite_turn)
+        mate = engine.mate_check(opposite_check)
+        if mate != 0:
+            SOUNDS["end"].play()
+            if mate == 1:
+                notify(title, f"Checkmate! [{player}] wins the game.")
+            if mate == 2:
+                notify(title, f"Stalemate! [{opponent}] has no moves to play.")
         else:
-            SOUNDS["move"].play()
+            SOUNDS["check"].play()
+    elif is_capture:
+        SOUNDS["capture"].play()
+    elif is_castle:
+        SOUNDS["castle"].play()
+    elif is_promotion:
+        SOUNDS["promote"].play()
+    else:
+        SOUNDS["move"].play()
 
 def square_to_screen(square, offset_x, flipped):
     file = ord(square[0]) - ord('a')
@@ -428,7 +451,6 @@ while running:
             # second click → attempt move
             else:
                 if square in legal_targets:
-                    print(selected_square, square)
                     make_move(selected_square + square)
 
                 # reset selection

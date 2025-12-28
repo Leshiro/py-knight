@@ -130,8 +130,24 @@ def promotion_check(stc, edc):
         promotion = 1
     return promotion
 
-def check_check(print_msg):
-    player_data = PlayerData[turn]
+def mate_check(check):
+    viable_moves = find_viable_moves()
+    if len(viable_moves) == 0:
+        if check == 0:
+            mate = 2
+            print(f"Stalemate! [{player}] has no moves to play.\n") 
+        elif check == 1:
+            mate = 1
+            print(f"Checkmate! [{opponent}] wins the game.\n")
+    else:
+        mate = 0
+    return mate
+
+def check_check(print_msg, turn_given=None):
+    if turn_given != None:
+        player_data = PlayerData[turn_given]
+    else:
+        player_data = PlayerData[turn]
     own_pieces = player_data["pieces"]
     opponent_pieces = player_data["opponent_pieces"]
     direction = player_data["direction"]
@@ -296,12 +312,7 @@ def save_game(save_file_name):
         except FileExistsError:
             print(f"[{file_name}.txt] already exists, please enter another name.")
             exists = 1
-        return exists
-def quit_game():
-    exit()
-def restart_game():
-    print("\nRestarting...")
-    load_game()                  
+        return exists             
 def save_current_state():
     with open(rf"{current_folder}\move{moves}.txt", "x") as file:
         file.write(f"turn={turn}\nmoves={moves}")
@@ -455,17 +466,6 @@ def try_move(input, promoted_to=None):
     opponent_pieces = player_data["opponent_pieces"]
     direction = player_data["direction"]
 
-    #check check
-    check = check_check(1)
-    
-    #checkmate / stalemate check
-    viable_moves = find_viable_moves()
-    if len(viable_moves) == 0:
-        if check == 0:
-            print(f"It's a stalemate! [{player}] has no moves to play.\n") 
-        elif check == 1:
-            print(f"Checkmate! [{opponent}] wins the game.\n")
-
 #load & start game
 def load_game(savefilename=None):
     #create saves folder
@@ -499,13 +499,13 @@ def load_game(savefilename=None):
         #load save file
         try: 
             coords = load_data(save_folder, save_file)
-            message = (f"\n[{save_file}] loaded successfully.")
+            message = (f"[{save_file}] loaded successfully.")
         except FileNotFoundError:
             if save_file != ".txt":   
-                message = (f"\nSave file [{save_file}] does not exist.")
+                message = (f"Save file [{save_file}] does not exist.")
                 return message
         except:
-            message = (f"\nSave file [{save_file}] is corrupted.")
+            message = (f"Save file [{save_file}] is corrupted.")
             return message
     else:
         message = None
@@ -515,5 +515,9 @@ def load_game(savefilename=None):
     
     #at start
     afterturn_reset()
-    save_current_state() 
+    save_current_state()
+
+    check = check_check(1)
+    mate_check(check)
+    
     return message
