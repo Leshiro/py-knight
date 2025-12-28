@@ -171,9 +171,11 @@ SOUNDS["start"].play()
 
 #Pygame window start
 font = pygame.font.SysFont(None, 28)
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption(title)
 pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
+clock = pygame.time.Clock()
+fps_limit = config.fps_limit
 
 #UI rectangle
 pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, BOARD_SIZE, UI_HEIGHT))
@@ -319,7 +321,6 @@ def make_move(move):
             move = move + " (O-O)"
         if abs(dx) == 4:
             move = move + " (O-O-O)"
-
     is_capture = engine.coords[edc] in opponent_pieces
     is_promotion = engine.promotion_check(stc, edc)
     if is_promotion:
@@ -413,10 +414,9 @@ def draw_checkmate_at(offset_x, flipped):
 
 def get_legal_targets(from_sq):
     targets = []
-    viable_moves = engine.find_viable_moves()
+    viable_moves = engine.find_viable_moves(from_sq)
     for move in viable_moves:
-        if move[:2] == from_sq:
-            targets.append(move[2:4])
+        targets.append(move[2:4])
     return targets
 
 def draw_legal_moves_at(offset_x, flipped):
@@ -518,5 +518,6 @@ while running:
     next_palette.update()
 
     draw(end)
+    clock.tick(60)
 
 pygame.quit()

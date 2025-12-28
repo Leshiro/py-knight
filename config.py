@@ -10,6 +10,8 @@ sound_folder = "assets/sounds"
 window_minimum = 180
 charpixel = 6
 
+fps_limit = 20
+
 def switch_palette(value):
     global CHOSEN_PALETTE
     keys = list(colors.BOARD_PALETTES)

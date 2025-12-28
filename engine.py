@@ -31,6 +31,10 @@ piece_values = ["empty", "wpawn", "wrook", "wknight", "wbishop", "wqueen", "wkin
 coords_hor = ["0","a", "b", "c", "d", "e", "f", "g", "h"]
 coords_ver = ["0","1", "2", "3", "4", "5", "6", "7", "8"]
 
+#array
+HOR = {c: i for i, c in enumerate(" abcdefgh")}
+VER = {c: i for i, c in enumerate(" 12345678")}
+
 #player data
 PlayerData = {
     1: {
@@ -77,8 +81,8 @@ def load_data(folder, file):
 #collision checks
 def diagonal_collision_check(s, e):
     collisions = 0
-    horizontal_change = coords_hor.index(e[0]) - coords_hor.index(s[0])
-    vertical_change = coords_ver.index(e[1]) - coords_ver.index(s[1])
+    horizontal_change = HOR[e[0]] - HOR[s[0]]
+    vertical_change = VER[e[1]] - VER[s[1]]
     if abs(horizontal_change) == abs(vertical_change):
         change = abs(horizontal_change)
         if horizontal_change > 0 and vertical_change > 0: #direction 1
@@ -101,8 +105,8 @@ def diagonal_collision_check(s, e):
 
 def collision_check(s, e):
     collisions = 0
-    horizontal_change = coords_hor.index(e[0]) - coords_hor.index(s[0])
-    vertical_change = coords_ver.index(e[1]) - coords_ver.index(s[1])
+    horizontal_change = HOR[e[0]] - HOR[s[0]]
+    vertical_change = VER[e[1]] - VER[s[1]]
     dx = 1 if horizontal_change > 0 else -1
     dy = 1 if vertical_change > 0 else -1
     for n in range(1, abs(horizontal_change)):
@@ -154,73 +158,68 @@ def get_king_cd(pieces):
     return king_cd
 
 def check_check(print_msg, turn_given=None):
-    if turn_given != None:
-        player_data = PlayerData[turn_given]
-    else:
-        player_data = PlayerData[turn]
-    own_pieces = player_data["pieces"]
+    print_msg = bool(print_msg)
+    player_data = PlayerData[turn_given] if turn_given != None else PlayerData[turn]
+
+    player = player_data["name"]
     opponent_pieces = player_data["opponent_pieces"]
     direction = player_data["direction"]
 
-    #get king coordinate
-    king_cd = get_king_cd(own_pieces)
+    king_cd = get_king_cd(player_data["pieces"])
+    king_x = HOR[king_cd[0]]
+    king_y = VER[king_cd[1]]
 
-    #get covered cds
-    covered_cds = []
     for s in coords:
         piece = coords[s]
-        if piece != empty:
-            for e in coords:
-                if s != e and e not in covered_cds:
-                    #changes
-                    dx = coords_hor.index(e[0]) - coords_hor.index(s[0])
-                    dy = coords_ver.index(e[1]) - coords_ver.index(s[1])
+        if piece not in opponent_pieces:
+            continue
 
-                    if piece == opponent_pieces[0]: #king
-                        if abs(dx) <= 1 and abs(dy) <= 1:
-                            if coords[e] not in opponent_pieces:
-                                covered_cds.append(e)
-                    if piece == opponent_pieces[1]: #bishop
-                        if abs(dx) == abs(dy):
-                            passes_collision = diagonal_collision_check(s, e)
-                            if passes_collision:
-                                if coords[e] not in opponent_pieces:
-                                    covered_cds.append(e)
-                    if piece == opponent_pieces[2]: #pawn
-                        if (dy) == 1 * -1 * direction and abs(dx) == 1:
-                            if coords[e] not in opponent_pieces:
-                                covered_cds.append(e)
-                    if piece == opponent_pieces[3]: #knight
-                        if abs(dx) == 1 and abs(dy) == 2:
-                            covered_cds.append(e)
-                        elif abs(dx) == 2 and abs(dy) == 1:    
-                            covered_cds.append(e)
-                    if piece == opponent_pieces[4]: #rook
-                        if dx == 0 or dy == 0:
-                            passes_collision = collision_check(s, e)  
-                            if passes_collision:
-                                if coords[e] not in opponent_pieces:
-                                    covered_cds.append(e)
-                    if piece == opponent_pieces[5]: #queen
-                        if dx == 0 or dy == 0:
-                            passes_collision = collision_check(s, e)  
-                            if passes_collision:
-                                if coords[e] not in opponent_pieces:
-                                    covered_cds.append(e)
-                        elif abs(dx) == abs(dy):
-                            passes_collision = diagonal_collision_check(s, e)
-                            if passes_collision:        
-                                if coords[e] not in opponent_pieces:
-                                    covered_cds.append(e)    
-    #check detection
-    check = 0
-    if king_cd in covered_cds:
-        check = 1
-        if print_msg == 1:
-            print(f"The {player} [King] is in check!")
-    else:
-        check = 0
-    return check
+        attacker_x = HOR[s[0]]
+        attacker_y = VER[s[1]]
+
+        dx = king_x - attacker_x
+        dy = king_y - attacker_y
+
+        # opponent king
+        if piece == opponent_pieces[0]:
+            if abs(dx) <= 1 and abs(dy) <= 1:
+                if print_msg:
+                    print(f"The {player} [King] is in check!")
+                return 1
+        # bishop
+        elif piece == opponent_pieces[1]:
+            if abs(dx) == abs(dy) and diagonal_collision_check(s, king_cd):
+                if print_msg:
+                    print(f"The {player} [King] is in check!")
+                return 1
+        # pawn
+        elif piece == opponent_pieces[2]:
+            if dy == -direction and abs(dx) == 1:
+                if print_msg:
+                    print(f"The {player} [King] is in check!")
+                return 1
+        # knight
+        elif piece == opponent_pieces[3]:
+            if (abs(dx), abs(dy)) in [(1, 2), (2, 1)]:
+                if print_msg:
+                    print(f"The {player} [King] is in check!")
+                return 1
+        # rook
+        elif piece == opponent_pieces[4]:
+            if (dx == 0 or dy == 0) and collision_check(s, king_cd):
+                if print_msg:
+                    print(f"The {player} [King] is in check!")
+                return 1
+        # queen
+        elif piece == opponent_pieces[5]:
+            if (
+                ((dx == 0 or dy == 0) and collision_check(s, king_cd))
+                or (abs(dx) == abs(dy) and diagonal_collision_check(s, king_cd))
+            ):
+                if print_msg:
+                    print(f"The {player} [King] is in check!")
+                return 1
+    return 0
 
 #viable moves
 def find_viable_moves(stc=None):
@@ -228,16 +227,21 @@ def find_viable_moves(stc=None):
     player_data = PlayerData[turn]
     own_pieces = player_data["pieces"]
     direction = player_data["direction"]
+
     #find playable moves
     playable = []
-    for s in coords:
+    if stc != None:
+        s_iter = [stc]
+    else:
+        s_iter = [sq for sq, p in coords.items() if p in own_pieces]
+    for s in s_iter:
         piece = coords[s]
         if piece in own_pieces:
             for e in coords:
-                if s != e and e not in playable and ((coords[e] not in own_pieces) or (piece == own_pieces[0] and coords[e] == own_pieces[4])):
+                if s != e and ((coords[e] not in own_pieces) or (piece == own_pieces[0] and coords[e] == own_pieces[4])):
                     #changes
-                    dx = coords_hor.index(e[0]) - coords_hor.index(s[0])
-                    dy = coords_ver.index(e[1]) - coords_ver.index(s[1])
+                    dx = HOR[e[0]] - HOR[s[0]]
+                    dy = VER[e[1]] - VER[s[1]]
 
                     if piece == own_pieces[0]: #king
                         if coords[e] == own_pieces[4]: #castling
@@ -281,6 +285,7 @@ def find_viable_moves(stc=None):
                             passes_collision = diagonal_collision_check(s, e)
                             if passes_collision:        
                                 playable.append(s+e)  
+    playable = list(dict.fromkeys(playable)) #remove duplicates
     viable = []
     for move in playable:
         #save previous state
