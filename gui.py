@@ -2,8 +2,8 @@ import engine
 import pygame
 import tkinter as tk
 
-title = "Chess"
-minimum = 150
+title = "Chess Alpha"
+minimum = 200
 charpixel = 5
 
 def ask_string(title, label):
@@ -110,11 +110,6 @@ def notify(title, label):
 
     root.mainloop()
 
-engine.load_game()
-pygame.init()
-pygame.mixer.pre_init(44100, -16, 2, 512)
-pygame.mixer.init()
-
 LIGHT = (238, 210, 183)
 DARK  = (160, 110, 70)
 UI_COLOR = (30, 30, 30)
@@ -131,12 +126,25 @@ BOARD_2_X = BOARD_SIZE + SEPARATOR
 WINDOW_WIDTH = BOARD_SIZE + BOARD_2_X
 WINDOW_HEIGHT = BOARD_SIZE + UI_HEIGHT
 
+BUTTON_W = 100
+BUTTON_H = 35
+GAP = 15
+UI_Y = BOARD_SIZE
+UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
+start_x = 20
+
+engine.load_game()
+pygame.init()
+pygame.mixer.pre_init(44100, -16, 2, 512)
+pygame.mixer.init()
+
 font = pygame.font.SysFont(None, 28)
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption(title)
+icon = pygame.image.load(f"assets/icon.png").convert_alpha()
+pygame.display.set_icon(icon)
 info = pygame.display.Info()
 
-UI_Y = BOARD_SIZE
 pygame.draw.rect(
     screen,
     UI_COLOR,
@@ -207,14 +215,6 @@ class Button:
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and self.hovered:
             self.action()
-
-BUTTON_W = 100
-BUTTON_H = 35
-GAP = 15
-UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
-
-total_width = BUTTON_W * 2 + GAP
-start_x = 20
 
 def save_game_dialog():
     exists = 1
