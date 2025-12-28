@@ -4,6 +4,7 @@ import os
 #folder names
 save_folder = "saves"
 current_folder = "current"
+perma_folder = "permanent"
 
 #pieces
 empty = "empty"
@@ -466,7 +467,6 @@ def try_move(input, promoted_to=None):
 
 #load & start game
 def load_game(savefilename=None):
-
     #create saves folder
     cwd = os.getcwd()
     save_path = rf"{cwd}\{save_folder}"
@@ -486,7 +486,7 @@ def load_game(savefilename=None):
             os.remove(file_path)
 
     #defaultcoords
-    default_coords = load_data("saves", "default.txt")
+    default_coords = load_data(perma_folder, "default.txt")
 
     #load save data
     global coords, moves, turn
