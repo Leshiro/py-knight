@@ -1,15 +1,17 @@
 import engine
-import game
+import config
 import pygame
 import tkinter as tk
 
-config = game
-
 title = config.title
+author = config.author
+icon = config.icon
+
+piece_set = config.piece_folder
+sounds = config.sound_folder
+
 minimum = config.window_minimum
 charpixel = config.charpixel
-
-piece_set = config.piece_set
 
 LIGHT = config.LIGHT
 DARK  = config.DARK
@@ -148,14 +150,14 @@ pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
 
 SOUNDS = {
-    "start": pygame.mixer.Sound("assets/sounds/game-start.mp3"),
-    "end": pygame.mixer.Sound("assets/sounds/game-end.mp3"),
-    "move": pygame.mixer.Sound("assets/sounds/move.mp3"),
-    "capture": pygame.mixer.Sound("assets/sounds/capture.mp3"),
-    "undo": pygame.mixer.Sound("assets/sounds/move.mp3"),
-    "check": pygame.mixer.Sound("assets/sounds/check.mp3"),
-    "castle": pygame.mixer.Sound("assets/sounds/castle.mp3"),
-    "promote": pygame.mixer.Sound("assets/sounds/promote.mp3"),
+    "start": pygame.mixer.Sound(f"{sounds}/game-start.mp3"),
+    "end": pygame.mixer.Sound(f"{sounds}/game-end.mp3"),
+    "move": pygame.mixer.Sound(f"{sounds}/move.mp3"),
+    "capture": pygame.mixer.Sound(f"{sounds}/capture.mp3"),
+    "undo": pygame.mixer.Sound(f"{sounds}/move.mp3"),
+    "check": pygame.mixer.Sound(f"{sounds}/check.mp3"),
+    "castle": pygame.mixer.Sound(f"{sounds}/castle.mp3"),
+    "promote": pygame.mixer.Sound(f"{sounds}/promote.mp3"),
 }
 
 def Start_Game(save=None):
@@ -167,21 +169,14 @@ def Start_Game(save=None):
 Start_Game()
 SOUNDS["start"].play()
 
+#Pygame window start
 font = pygame.font.SysFont(None, 28)
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption(title)
-icon = pygame.image.load(f"assets/icon.png").convert_alpha()
-pygame.display.set_icon(icon)
-info = pygame.display.Info()
+pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
 
-pygame.draw.rect(
-    screen,
-    UI_COLOR,
-    (0, UI_Y, BOARD_SIZE, UI_HEIGHT)
-)
-
-selected_square = None
-running = True
+#UI rectangle
+pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, BOARD_SIZE, UI_HEIGHT))
 
 PIECE_TO_IMAGE = {
     engine.wpawn: "wpawn",
@@ -201,7 +196,7 @@ PIECE_TO_IMAGE = {
 def load_images():
     images = {}
     for name in PIECE_TO_IMAGE.values():
-        img = pygame.image.load(f"assets/pieces/{piece_set}/{name}.png").convert_alpha()
+        img = pygame.image.load(f"{piece_set}/{name}.png").convert_alpha()
         images[name] = pygame.transform.smoothscale(img, (SQ, SQ))
     return images
 
@@ -279,11 +274,19 @@ def confirm_quit():
     if confirm == True:
         exit()
 
+def switch_palette(value):
+    board_colors = config.switch_palette(value)
+    global LIGHT, DARK
+    LIGHT = board_colors[0]
+    DARK  = board_colors[1]
+
 save_button = Button((START_X, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
 load_button = Button((START_X + BUTTON_W + GAP, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
 undo_button = Button((START_X + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Undo", lambda: confirm_undo())
 restart_button = Button((START_X + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
 quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
+previous_palette = Button((START_X + (BUTTON_W + GAP) *5 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette-1", lambda: switch_palette(-1))
+next_palette = Button((START_X + (BUTTON_W + GAP) *6 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette+1", lambda: switch_palette(1))
 
 def end_check(popup=0, print=False):
     player_data = engine.PlayerData[engine.turn]
@@ -459,11 +462,14 @@ def draw(end):
     undo_button.draw(screen, font)
     restart_button.draw(screen, font)
     quit_button.draw(screen, font)
+    previous_palette.draw(screen, font)
+    next_palette.draw(screen, font)
 
     pygame.display.flip()
 
 selected_square = None
 legal_targets = []
+running = True
 
 while running:
     if end_notified == 0:
@@ -479,6 +485,8 @@ while running:
         undo_button.handle_event(event)
         restart_button.handle_event(event)
         quit_button.handle_event(event)
+        previous_palette.handle_event(event)
+        next_palette.handle_event(event)
 
         #when clicked
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -506,6 +514,8 @@ while running:
     undo_button.update()
     restart_button.update()
     quit_button.update()
+    previous_palette.update()
+    next_palette.update()
 
     draw(end)
 
