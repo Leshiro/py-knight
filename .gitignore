@@ -19,5 +19,6 @@ Thumbs.db
 # VS Code
 .vscode/
 
-#current
+#ignore
+test.py
 current/
