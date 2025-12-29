@@ -57,16 +57,20 @@ PlayerData = {
 
 #load .txt files
 def load_data(folder, file):
-    global moves, turn
+    global moves, turn, king_moved
     with open(rf"{folder}\{file}", 'r') as file:
         file_content = file.read()
         coords_list = file_content.split("\n")
+
         turn = int(coords_list[0].replace("turn=",""))
-        if turn != 1 and turn != 2:
-            turn = 1 
         moves = int(coords_list[1].replace("moves=",""))
+        king_moved = (coords_list[2].replace("king_moved=","")).split("/")
+        king_moved.insert(0, "None")
+
+        while coords_list[0] != "---":
+            coords_list.remove(coords_list[0])
         coords_list.remove(coords_list[0])
-        coords_list.remove(coords_list[0])
+
         for n in range(len(coords_list)):
             coord = coords_list[n][3:]
             i = piece_values.index(coord)
@@ -76,7 +80,7 @@ def load_data(folder, file):
         for i in range(1, 9):
             for a in range(1, 9):
                 coords[f"{coords_hor[a]}{coords_ver[i]}"] = coords_list[(i - 1) * 8 + a]
-        return coords    
+        return coords
 
 #collision checks
 def diagonal_collision_check(s, e):
@@ -246,12 +250,13 @@ def find_viable_moves(stc=None):
                     if piece == own_pieces[0]: #king
                         if coords[e] == own_pieces[4]: #castling
                             if (s[0] == "e")  and (e[0] in ["a", "h"] and e[1] in ["1", "8"]):
-                                passes_collision = collision_check(s, e)
-                                if passes_collision:
-                                    if abs(dx) == 3:
-                                        playable.append(s+e + " (O-O)")
-                                    if abs(dx) == 4:
-                                        playable.append(s+e + " (O-O-O)")
+                                if king_moved[turn] == "0":
+                                    passes_collision = collision_check(s, e)
+                                    if passes_collision:
+                                        if abs(dx) == 3:
+                                            playable.append(s+e + " (O-O)")
+                                        if abs(dx) == 4:
+                                            playable.append(s+e + " (O-O-O)")
                         else:
                             if abs(dx) <= 1 and abs(dy) <= 1:
                                 playable.append(s+e)
@@ -311,7 +316,7 @@ def save_game(save_file_name):
         file_name = save_file_name
         try:
             with open(rf"{save_folder}\{file_name}.txt", "x") as file:
-                file.write(f"turn={turn}\nmoves={moves}")
+                file.write(f"turn={turn}\nmoves={moves}\nking_moved={king_moved[1]}/{king_moved[2]}\n---")
                 for coord in coords:
                     coord_piece = coords[coord]
                     i = pieces.index(coord_piece)
@@ -327,7 +332,7 @@ def save_game(save_file_name):
         return exists             
 def save_current_state():
     with open(rf"{current_folder}\move{moves}.txt", "x") as file:
-        file.write(f"turn={turn}\nmoves={moves}")
+        file.write(f"turn={turn}\nmoves={moves}\nking_moved={king_moved[1]}/{king_moved[2]}\n---")
         for coord in coords:
             coord_piece = coords[coord]
             i = pieces.index(coord_piece)
@@ -393,6 +398,8 @@ def play_move(move, promoted_to=None):
     stc = move[:2]
     edc = move[2:4]
     piece = coords[stc]
+    if piece[1:] == "king":
+        king_moved[turn] = "1"
     capture = capture_check(edc)
     promotion = promotion_check(stc, edc)
     if promotion == 1:
@@ -474,6 +481,11 @@ def try_move(input, promoted_to=None):
     opponent_pieces = player_data["opponent_pieces"]
     direction = player_data["direction"]
 
+#default game
+def default_game():
+    global coords
+    coords = load_data(perma_folder, "default.txt")
+
 #load & start game
 def load_game(savefilename=None):
     #create saves folder
@@ -494,11 +506,8 @@ def load_game(savefilename=None):
         if os.path.isfile(file_path) and file[:4] == "move":
             os.remove(file_path)
 
-    #defaultcoords
-    default_coords = load_data(perma_folder, "default.txt")
-
     #load save data
-    global coords, moves, turn
+    global coords
     if savefilename != None:  
         save_file = savefilename
         save_file = save_file.lower().strip()
@@ -516,11 +525,9 @@ def load_game(savefilename=None):
             message = (f"Save file [{save_file}] is corrupted.")
             return message
     else:
+        default_game()
         message = None
-        coords = default_coords
-        turn = 1
-        moves = 0
-    
+        
     #at start
     afterturn_reset()
     save_current_state()

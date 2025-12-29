@@ -1,5 +1,7 @@
 turn=2
 moves=17
+king_moved=0/0
+---
 a1=wrook
 b1=empty
 c1=empty

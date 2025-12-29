@@ -1,5 +1,7 @@
 turn=1
 moves=0
+king_moved=0/0
+---
 a1=wrook
 b1=wknight
 c1=wbishop

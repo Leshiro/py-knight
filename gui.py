@@ -366,12 +366,14 @@ def screen_to_square(mx, my):
     if my < BOARD_Y or my >= BOARD_Y + BOARD_SIZE:
         return None
 
-    if mx < BOARD_SIZE:
+    if BOARD_1_X < mx < BOARD_1_X + BOARD_SIZE:
         offset_x = BOARD_1_X
         flipped = False
-    else:
+    elif BOARD_2_X + BOARD_SIZE > mx > BOARD_2_X:
         offset_x = BOARD_2_X
         flipped = True
+    else:
+        return None
 
     file = (mx - offset_x) // SQ
     rank = (my - BOARD_Y) // SQ

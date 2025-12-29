@@ -1,5 +1,7 @@
 turn=1
 moves=28
+king_moved=0/0
+---
 a1=empty
 b1=empty
 c1=empty
