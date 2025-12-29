@@ -26,18 +26,25 @@ UI_HEIGHT = config.UI_HEIGHT
 SQ = BOARD_SIZE // 8
 SIZE = BOARD_SIZE + UI_HEIGHT
 
-SEPARATOR = config.SEPARATOR
-BOARD_2_X = BOARD_SIZE + SEPARATOR
+BORDER_COLOR = config.BORDER_COLOR
+BORDER_THICKNESS = config.BORDER_THICKNESS
 
-WINDOW_WIDTH = BOARD_SIZE + BOARD_2_X
-WINDOW_HEIGHT = BOARD_SIZE + UI_HEIGHT
+SEPARATOR = config.SEPARATOR
+
+BOARD_1_X = 0 + BORDER_THICKNESS
+BOARD_2_X = BOARD_SIZE + SEPARATOR + BORDER_THICKNESS
+
+BOARD_Y = 0 + BORDER_THICKNESS
+
+WINDOW_WIDTH = BORDER_THICKNESS * 2 + BOARD_SIZE * 2 + SEPARATOR
+WINDOW_HEIGHT = BORDER_THICKNESS + BOARD_SIZE + UI_HEIGHT
 
 BUTTON_W = config.BUTTON_W
 BUTTON_H = config.BUTTON_H
 
 GAP = config.GAP
 
-UI_Y = BOARD_SIZE
+UI_Y = BOARD_Y + BOARD_SIZE
 UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
 START_X = config.START_X
 
@@ -176,9 +183,6 @@ pygame.display.set_caption(title)
 pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
 clock = pygame.time.Clock()
 fps_limit = config.fps_limit
-
-#UI rectangle
-pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, BOARD_SIZE, UI_HEIGHT))
 
 PIECE_TO_IMAGE = {
     engine.wpawn: "wpawn",
@@ -346,7 +350,7 @@ def make_move(move):
         SOUNDS["move"].play()
     return is_end
 
-def square_to_screen(square, offset_x, flipped):
+def square_to_screen(square, offset_x, offset_y, flipped):
     file = ord(square[0]) - ord('a')
     rank = int(square[1]) - 1
 
@@ -355,22 +359,22 @@ def square_to_screen(square, offset_x, flipped):
     rank = 7 - rank if not flipped else rank
 
     x = offset_x + file * SQ
-    y = rank * SQ
+    y = offset_y + rank * SQ
     return x, y
 
 def screen_to_square(mx, my):
-    if my >= BOARD_SIZE:
+    if my < BOARD_Y or my >= BOARD_Y + BOARD_SIZE:
         return None
 
     if mx < BOARD_SIZE:
-        offset_x = 0
+        offset_x = BOARD_1_X
         flipped = False
     else:
-        offset_x = BOARD_SIZE
+        offset_x = BOARD_2_X
         flipped = True
 
     file = (mx - offset_x) // SQ
-    rank = my // SQ
+    rank = (my - BOARD_Y) // SQ
 
     if flipped:
         file = 7 - file
@@ -378,38 +382,38 @@ def screen_to_square(mx, my):
 
     return chr(ord('a') + file) + str(rank + 1)
 
-def draw_board_at(offset_x, flipped):
+def draw_board_at(offset_x, offset_y, flipped):
     for rank in range(8):
         for file in range(8):
             draw_file = 7 - file if flipped else file
             draw_rank = rank if flipped else 7 - rank
             color = LIGHT if (rank + file) % 2 == 0 else DARK
-            pygame.draw.rect(screen, color, (offset_x + draw_file * SQ, draw_rank * SQ, SQ, SQ))
+            pygame.draw.rect(screen, color, (offset_x + draw_file * SQ, offset_y + draw_rank * SQ, SQ, SQ))
 
-def draw_pieces_at(offset_x, flipped):
+def draw_pieces_at(offset_x, offset_y, flipped):
     for square, piece in engine.coords.items():
         if piece != engine.empty:
-            x, y = square_to_screen(square, offset_x, flipped)
+            x, y = square_to_screen(square, offset_x, offset_y, flipped)
             screen.blit(PIECE_IMAGES[PIECE_TO_IMAGE[piece]], (x, y))
 
-def draw_selection_at(offset_x, flipped):
+def draw_selection_at(offset_x, offset_y, flipped):
     if not selected_square:
         return
 
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
     overlay.fill(SELECTION_COLOR)
 
-    x, y = square_to_screen(selected_square, offset_x, flipped)
+    x, y = square_to_screen(selected_square, offset_x, offset_y, flipped)
     screen.blit(overlay, (x, y))
 
-def draw_checkmate_at(offset_x, flipped):
+def draw_checkmate_at(offset_x, offset_y, flipped):
     player_data = engine.PlayerData[engine.turn]
     own_pieces = player_data["pieces"]
     selected_square = engine.get_king_cd(own_pieces)
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
     overlay.fill(CHECKMATE_COLOR)
 
-    x, y = square_to_screen(selected_square, offset_x, flipped)
+    x, y = square_to_screen(selected_square, offset_x, offset_y, flipped)
     screen.blit(overlay, (x, y))
 
 def get_legal_targets(from_sq):
@@ -419,44 +423,43 @@ def get_legal_targets(from_sq):
         targets.append(move[2:4])
     return targets
 
-def draw_legal_moves_at(offset_x, flipped):
+def draw_legal_moves_at(offset_x, offset_y, flipped):
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
     overlay.fill(LEGAL_MOVES_COLOR)
 
     for sq in legal_targets:
-        x, y = square_to_screen(sq, offset_x, flipped)
+        x, y = square_to_screen(sq, offset_x, offset_y, flipped)
         screen.blit(overlay, (x, y))
 
 def draw(end):
-    screen.fill((0, 0, 0))
- 
+    screen.fill(UI_COLOR)
     #boards
-    draw_board_at(0, flipped=False)
-    draw_board_at(BOARD_2_X, flipped=True)
+    draw_board_at(BOARD_1_X, BOARD_Y, flipped=False)
+    draw_board_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #legal moves
-    draw_legal_moves_at(0, flipped=False)
-    draw_legal_moves_at(BOARD_2_X, flipped=True)
+    draw_legal_moves_at(BOARD_1_X, BOARD_Y, flipped=False)
+    draw_legal_moves_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #selection
-    draw_selection_at(0, flipped=False)
-    draw_selection_at(BOARD_2_X, flipped=True)
+    draw_selection_at(BOARD_1_X, BOARD_Y, flipped=False)
+    draw_selection_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #checkmate
     if end:
-        draw_checkmate_at(0, flipped=False)
-        draw_checkmate_at(BOARD_2_X, flipped=True)
+        draw_checkmate_at(BOARD_1_X, BOARD_Y, flipped=False)
+        draw_checkmate_at(BOARD_2_X, BOARD_Y, flipped=True)
     
     #pieces (last)
-    draw_pieces_at(0, flipped=False)
-    draw_pieces_at(BOARD_2_X, flipped=True)
+    draw_pieces_at(BOARD_1_X, BOARD_Y, flipped=False)
+    draw_pieces_at(BOARD_2_X, BOARD_Y, flipped=True)
 
-    #SEPARATOR
-    pygame.draw.line(screen, UI_COLOR, ((BOARD_SIZE + BOARD_2_X) // 2, 0), ((BOARD_SIZE + BOARD_2_X) // 2, BOARD_SIZE), SEPARATOR)
-    # UI bar
+    #border
+    pygame.draw.rect(screen, BORDER_COLOR, (0, 0, WINDOW_WIDTH, WINDOW_HEIGHT), BORDER_THICKNESS)
+    #UI menu
     pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
 
-    # buttons
+    #UI buttons
     save_button.draw(screen, font)
     load_button.draw(screen, font)
     undo_button.draw(screen, font)
@@ -518,6 +521,6 @@ while running:
     next_palette.update()
 
     draw(end)
-    clock.tick(60)
+    clock.tick(fps_limit)
 
 pygame.quit()

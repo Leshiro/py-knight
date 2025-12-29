@@ -32,6 +32,10 @@ CHECKMATE_COLOR = colors.blue_tint
 
 BOARD_SIZE = 640
 UI_HEIGHT = 70
+
+BORDER_COLOR = colors.dark_gray
+BORDER_THICKNESS = 15
+
 SEPARATOR = 15
 
 BUTTON_W = 100

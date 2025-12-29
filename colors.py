@@ -1,4 +1,5 @@
 #colors
+black = (0, 0, 0)
 dark_gray = (30, 30, 30)
 
 #tints

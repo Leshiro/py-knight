@@ -353,8 +353,8 @@ def castle(move):
     if player == "WHITE":
         if "(O-O-O)" in move:
             coords["a1"] = empty
-            coords["b1"] = wking
-            coords["c1"] = wrook 
+            coords["c1"] = wking
+            coords["d1"] = wrook 
         if "(O-O)" in move:
             coords["h1"] = empty
             coords["g1"] = wking
@@ -362,8 +362,8 @@ def castle(move):
     if player == "BLACK":
         if "(O-O-O)" in move:
             coords["a8"] = empty
-            coords["b8"] = bking
-            coords["c8"] = brook
+            coords["c8"] = bking
+            coords["d8"] = brook
         if "(O-O)" in move:
             coords["h8"] = empty
             coords["g8"] = bking
@@ -375,15 +375,15 @@ def uncastle(move):
     player = player_data["name"]
     if player == "WHITE":
         if "(O-O-O)" in move:
-            coords["b1"] = empty
-            coords["c1"] = empty  
+            coords["c1"] = empty
+            coords["d1"] = empty  
         if "(O-O)" in move:
             coords["g1"] = empty
             coords["f1"] = empty
     if player == "BLACK":
         if "(O-O-O)" in move:
-            coords["b8"] = empty
-            coords["c8"] = empty 
+            coords["c8"] = empty
+            coords["d8"] = empty 
         if "(O-O)" in move:
             coords["g8"] = empty
             coords["f8"] = empty
