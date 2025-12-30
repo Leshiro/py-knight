@@ -497,8 +497,10 @@ def draw(end=None):
     draw_board_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #legal moves
-    draw_legal_moves_at(BOARD_1_X, BOARD_Y, flipped=False)
-    draw_legal_moves_at(BOARD_2_X, BOARD_Y, flipped=True)
+    if engine.turn == 1:
+        draw_legal_moves_at(BOARD_1_X, BOARD_Y, flipped=False)
+    else:
+        draw_legal_moves_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #selection
     draw_selection_at(BOARD_1_X, BOARD_Y, flipped=False)
