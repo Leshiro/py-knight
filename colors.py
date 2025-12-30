@@ -18,3 +18,23 @@ BOARD_PALETTES = {
     "GRAPHITE" : [(90, 94, 98), (45, 47, 50)],
     "SAGE" : [(231, 237, 229), (132, 156, 136)],
 }
+
+def switch_palette(value):
+    global CHOSEN_PALETTE
+    keys = list(BOARD_PALETTES)
+    i = keys.index(CHOSEN_PALETTE)
+    CHOSEN_PALETTE = keys[(i + value) % len(keys)]
+    return BOARD_PALETTES[CHOSEN_PALETTE]
+
+#assign
+CHOSEN_PALETTE = "WOOD_CLASSIC"
+BOARD_COLORS = BOARD_PALETTES[CHOSEN_PALETTE]
+
+LIGHT = BOARD_COLORS[0]
+DARK = BOARD_COLORS[1]
+
+BORDER_COLOR = dark_gray
+UI_COLOR = dark_gray
+LEGAL_MOVES_COLOR = green_tint
+SELECTION_COLOR = red_tint
+CHECKMATE_COLOR = blue_tint

@@ -1,52 +1,72 @@
+#import
 import engine
+import assets
+import colors
 import config
+
 import pygame
 import tkinter as tk
 
+#assets
+icon = assets.icon
+
+piece_set = assets.chosen_set
+piece_file_format = assets.piece_file_format
+piece_assets = assets.piece_assets
+
+sound_folder = assets.sound_folder
+
+sound_folder = assets.sound_folder
+sounds = assets.sounds
+
+#colors
+LIGHT = colors.LIGHT
+DARK  = colors.DARK
+
+BORDER_COLOR = colors.BORDER_COLOR
+UI_COLOR = colors.UI_COLOR
+LEGAL_MOVES_COLOR = colors.LEGAL_MOVES_COLOR
+CHECKMATE_COLOR = colors.CHECKMATE_COLOR
+SELECTION_COLOR = colors.SELECTION_COLOR
+
+##config
 title = config.title
 author = config.author
-icon = config.icon
+fps_limit = config.fps_limit
 
-piece_set = config.piece_folder
-sounds = config.sound_folder
-
+#tkinter windows
 minimum = config.window_minimum
 charpixel = config.charpixel
 
-LIGHT = config.LIGHT
-DARK  = config.DARK
-
-UI_COLOR = config.UI_COLOR
-LEGAL_MOVES_COLOR = config.LEGAL_MOVES_COLOR
-CHECKMATE_COLOR = config.CHECKMATE_COLOR
-SELECTION_COLOR = config.SELECTION_COLOR
-
+#board & square size
 BOARD_SIZE = config.BOARD_SIZE
 UI_HEIGHT = config.UI_HEIGHT
 SQ = BOARD_SIZE // 8
 SIZE = BOARD_SIZE + UI_HEIGHT
 
-BORDER_COLOR = config.BORDER_COLOR
+#borders & separator
 BORDER_THICKNESS = config.BORDER_THICKNESS
-
 SEPARATOR = config.SEPARATOR
 
+#board position
 BOARD_1_X = 0 + BORDER_THICKNESS
 BOARD_2_X = BOARD_SIZE + SEPARATOR + BORDER_THICKNESS
-
 BOARD_Y = 0 + BORDER_THICKNESS
 
+#window size
 WINDOW_WIDTH = BORDER_THICKNESS * 2 + BOARD_SIZE * 2 + SEPARATOR
 WINDOW_HEIGHT = BORDER_THICKNESS + BOARD_SIZE + UI_HEIGHT
 
+#buttons
 BUTTON_W = config.BUTTON_W
 BUTTON_H = config.BUTTON_H
-
-GAP = config.GAP
+GAP = config.BUTTON_GAP
+START_X = config.BUTTON_START_X
 
 UI_Y = BOARD_Y + BOARD_SIZE
 UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
-START_X = config.START_X
+
+###
 
 def ask_string(title, label):
     result = {"value": None}
@@ -197,19 +217,20 @@ def ask_promo(title, message):
     return result["value"]
 
 pygame.init()
+
+#pygame start
+font = pygame.font.SysFont(None, 28)
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.NOFRAME)
+pygame.display.set_caption(title)
+#no icon yet - pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
+clock = pygame.time.Clock()
+
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
 
-SOUNDS = {
-    "start": pygame.mixer.Sound(f"{sounds}/game-start.mp3"),
-    "end": pygame.mixer.Sound(f"{sounds}/game-end.mp3"),
-    "move": pygame.mixer.Sound(f"{sounds}/move.mp3"),
-    "capture": pygame.mixer.Sound(f"{sounds}/capture.mp3"),
-    "undo": pygame.mixer.Sound(f"{sounds}/move.mp3"),
-    "check": pygame.mixer.Sound(f"{sounds}/check.mp3"),
-    "castle": pygame.mixer.Sound(f"{sounds}/castle.mp3"),
-    "promote": pygame.mixer.Sound(f"{sounds}/promote.mp3"),
-}
+SOUNDS = {}
+for sound in sounds:
+    SOUNDS.update({sound : pygame.mixer.Sound(f"{sound_folder}{sounds[sound]}")})
 
 def Start_Game(save=None):
     global end_notified
@@ -217,40 +238,16 @@ def Start_Game(save=None):
     message = engine.load_game(save)
     return message
 
-Start_Game()
-SOUNDS["start"].play()
-
-#Pygame window start
-font = pygame.font.SysFont(None, 28)
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.NOFRAME)
-pygame.display.set_caption(title)
-pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
-clock = pygame.time.Clock()
-fps_limit = config.fps_limit
-
-PIECE_TO_IMAGE = {
-    engine.wpawn: "wpawn",
-    engine.wrook: "wrook",
-    engine.wknight: "wknight",
-    engine.wbishop: "wbishop",
-    engine.wqueen: "wqueen",
-    engine.wking: "wking",
-    engine.bpawn: "bpawn",
-    engine.brook: "brook",
-    engine.bknight: "bknight",
-    engine.bbishop: "bbishop",
-    engine.bqueen: "bqueen",
-    engine.bking: "bking",
-}
-
-def load_images():
+def load_images(piece_set):
     images = {}
-    for name in PIECE_TO_IMAGE.values():
-        img = pygame.image.load(f"{piece_set}/{name}.png").convert_alpha()
+    for name in assets.piece_assets.values():
+        img = pygame.image.load(f"{piece_set}/{name}.{piece_file_format}").convert_alpha()
         images[name] = pygame.transform.smoothscale(img, (SQ, SQ))
     return images
 
-PIECE_IMAGES = load_images()
+Start_Game()
+SOUNDS["start"].play()
+PIECE_IMAGES = load_images(piece_set)
 
 class Button:
     def __init__(self, rect, text, action):
@@ -325,10 +322,15 @@ def confirm_quit():
         exit()
 
 def switch_palette(value):
-    board_colors = config.switch_palette(value)
+    board_colors = colors.switch_palette(value)
     global LIGHT, DARK
     LIGHT = board_colors[0]
     DARK  = board_colors[1]
+
+def switch_piece_set(value):
+    global PIECE_IMAGES
+    piece_set = assets.switch_piece_set(value)
+    PIECE_IMAGES = load_images(piece_set)
 
 save_button = Button((START_X + (BUTTON_W + GAP) * 0, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
 load_button = Button((START_X + (BUTTON_W + GAP) * 1, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
@@ -337,6 +339,8 @@ restart_button = Button((START_X + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_
 quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
 previous_palette = Button((START_X + (BUTTON_W + GAP) *5 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette-1", lambda: switch_palette(-1))
 next_palette = Button((START_X + (BUTTON_W + GAP) *6   , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette+1", lambda: switch_palette(1))
+previous_set = Button((START_X + (BUTTON_W + GAP) *7 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Pieces-1", lambda: switch_piece_set(-1))
+next_set = Button((START_X + (BUTTON_W + GAP) *8 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Pieces+1", lambda: switch_piece_set(1))
 
 def end_check(popup=0):
     player_data = engine.PlayerData[engine.turn]
@@ -441,7 +445,7 @@ def draw_pieces_at(offset_x, offset_y, flipped):
     for square, piece in engine.coords.items():
         if piece != engine.empty:
             x, y = square_to_screen(square, offset_x, offset_y, flipped)
-            screen.blit(PIECE_IMAGES[PIECE_TO_IMAGE[piece]], (x, y))
+            screen.blit(PIECE_IMAGES[piece_assets[piece]], (x, y))
 
 def draw_selection_at(offset_x, offset_y, flipped):
     if not selected_square:
@@ -514,6 +518,8 @@ def draw(end=None):
     quit_button.draw(screen, font)
     previous_palette.draw(screen, font)
     next_palette.draw(screen, font)
+    previous_set.draw(screen, font)
+    next_set.draw(screen, font)
 
     pygame.display.flip()
 
@@ -535,6 +541,8 @@ while running:
         quit_button.handle_event(event)
         previous_palette.handle_event(event)
         next_palette.handle_event(event)
+        previous_set.handle_event(event)
+        next_set.handle_event(event)
 
         #when clicked
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -571,8 +579,11 @@ while running:
     quit_button.update()
     previous_palette.update()
     next_palette.update()
+    previous_set.update()
+    next_set.update()
 
     draw(end)
+    
     clock.tick(fps_limit)
 
 pygame.quit()
