@@ -3,10 +3,10 @@ black = (0, 0, 0)
 dark_gray = (30, 30, 30)
 
 #tints
-green_tint = (50, 180, 50, 120)
+green_tint = (50, 180, 50, 150)
 red_tint = (200, 50, 50, 150)
-blue_tint = (30, 144, 255, 120)
-yellow_tint = (255, 255, 0, 120)
+blue_tint = (30, 144, 255, 150)
+yellow_tint = (255, 255, 0, 150)
 
 #board palettes
 BOARD_PALETTES = {
