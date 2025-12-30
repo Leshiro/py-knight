@@ -1,6 +1,7 @@
 turn=2
-moves=17
+moves=21
 king_moved=0/0
+last_move=None
 ---
 a1=wrook
 b1=empty

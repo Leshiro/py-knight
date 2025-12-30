@@ -1,6 +1,7 @@
 turn=1
 moves=17
 king_moved=0/0
+last_move=None
 ---
 a1=empty
 b1=empty

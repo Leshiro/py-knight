@@ -55,21 +55,36 @@ PlayerData = {
     }
 }
 
+def read_variables(coords_list):
+    global moves, turn, king_moved, last_move
+    turn = int(coords_list[0].replace("turn=","").strip())
+    moves = int(coords_list[1].replace("moves=","").strip())
+
+    king_moved = (coords_list[2].replace("king_moved=","")).strip().split("/")
+    king_moved.insert(0, "None")
+
+    last_move = coords_list[3].replace("last_move=","").strip()
+    if last_move != "None":
+        last_move = last_move.split("/")
+
+def write_variables():
+    variables = f"""turn={turn}
+moves={moves}
+king_moved={king_moved[1]}/{king_moved[2]}
+last_move={last_move[0]}/{last_move[1]}
+---"""
+    return variables
+
 #load .txt files
 def load_data(folder, file):
-    global moves, turn, king_moved
     with open(rf"{folder}\{file}", 'r') as file:
         file_content = file.read()
         coords_list = file_content.split("\n")
 
-        turn = int(coords_list[0].replace("turn=",""))
-        moves = int(coords_list[1].replace("moves=",""))
-        king_moved = (coords_list[2].replace("king_moved=","")).split("/")
-        king_moved.insert(0, "None")
+        read_variables(coords_list)
 
-        while coords_list[0] != "---":
+        while "---" in coords_list:
             coords_list.remove(coords_list[0])
-        coords_list.remove(coords_list[0])
 
         for n in range(len(coords_list)):
             coord = coords_list[n][3:]
@@ -138,17 +153,13 @@ def promotion_check(stc, edc):
         promotion = 1
     return promotion
 
-def mate_check(check, printmsg=False):
+def mate_check(check):
     viable_moves = find_viable_moves()
     if len(viable_moves) == 0:
         if check == 0:
             mate = 2
-            if printmsg:
-                print(f"Stalemate! [{player}] has no moves to play.\n") 
         elif check == 1:
             mate = 1
-            if printmsg:
-                print(f"Checkmate! [{opponent}] wins the game.\n")
     else:
         mate = 0
     return mate
@@ -161,17 +172,29 @@ def get_king_cd(pieces):
             break
     return king_cd
 
-def check_check(print_msg, turn_given=None):
-    print_msg = bool(print_msg)
+def check_castleable(type):
+    y = 1 if turn == 1 else 8
+    if type == 4:
+        xs = ["e", "d", "c"]
+    if type == 3:
+        xs = ["e", "f", "g"]
+    for x in xs:
+        coord = f"{x}{y}"
+        check_sq = check_check(turn, coord)
+        if check_sq == 1:
+            return False
+    return True
+
+def check_check(turn_given=None, square=None):
     player_data = PlayerData[turn_given] if turn_given != None else PlayerData[turn]
 
-    player = player_data["name"]
     opponent_pieces = player_data["opponent_pieces"]
     direction = player_data["direction"]
 
-    king_cd = get_king_cd(player_data["pieces"])
-    king_x = HOR[king_cd[0]]
-    king_y = VER[king_cd[1]]
+    if square != None:
+        king_cd = square
+    else: 
+        king_cd = get_king_cd(player_data["pieces"])
 
     for s in coords:
         piece = coords[s]
@@ -181,38 +204,31 @@ def check_check(print_msg, turn_given=None):
         attacker_x = HOR[s[0]]
         attacker_y = VER[s[1]]
 
+        king_x = HOR[king_cd[0]]
+        king_y = VER[king_cd[1]]
+
         dx = king_x - attacker_x
         dy = king_y - attacker_y
 
         # opponent king
         if piece == opponent_pieces[0]:
             if abs(dx) <= 1 and abs(dy) <= 1:
-                if print_msg:
-                    print(f"The {player} [King] is in check!")
                 return 1
         # bishop
         elif piece == opponent_pieces[1]:
             if abs(dx) == abs(dy) and diagonal_collision_check(s, king_cd):
-                if print_msg:
-                    print(f"The {player} [King] is in check!")
                 return 1
         # pawn
         elif piece == opponent_pieces[2]:
             if dy == -direction and abs(dx) == 1:
-                if print_msg:
-                    print(f"The {player} [King] is in check!")
                 return 1
         # knight
         elif piece == opponent_pieces[3]:
             if (abs(dx), abs(dy)) in [(1, 2), (2, 1)]:
-                if print_msg:
-                    print(f"The {player} [King] is in check!")
                 return 1
         # rook
         elif piece == opponent_pieces[4]:
             if (dx == 0 or dy == 0) and collision_check(s, king_cd):
-                if print_msg:
-                    print(f"The {player} [King] is in check!")
                 return 1
         # queen
         elif piece == opponent_pieces[5]:
@@ -220,8 +236,6 @@ def check_check(print_msg, turn_given=None):
                 ((dx == 0 or dy == 0) and collision_check(s, king_cd))
                 or (abs(dx) == abs(dy) and diagonal_collision_check(s, king_cd))
             ):
-                if print_msg:
-                    print(f"The {player} [King] is in check!")
                 return 1
     return 0
 
@@ -230,6 +244,7 @@ def find_viable_moves(stc=None):
     global piece
     player_data = PlayerData[turn]
     own_pieces = player_data["pieces"]
+    opponent_pieces = player_data["opponent_pieces"]
     direction = player_data["direction"]
 
     #find playable moves
@@ -243,20 +258,27 @@ def find_viable_moves(stc=None):
         if piece in own_pieces:
             for e in coords:
                 if s != e and ((coords[e] not in own_pieces) or (piece == own_pieces[0] and coords[e] == own_pieces[4])):
-                    #changes
-                    dx = HOR[e[0]] - HOR[s[0]]
-                    dy = VER[e[1]] - VER[s[1]]
-
+                    #start
+                    sx = HOR[s[0]]
+                    sy = VER[s[1]]
+                    #end
+                    ex = HOR[e[0]]
+                    ey = VER[e[1]]
+                    #change
+                    dx = ex - sx
+                    dy = ey - sy
                     if piece == own_pieces[0]: #king
                         if coords[e] == own_pieces[4]: #castling
-                            if (s[0] == "e")  and (e[0] in ["a", "h"] and e[1] in ["1", "8"]):
+                            if (sx == 5) and (ex in [1, 8]) and ((ey == 1 and turn == 1) or (ey == 8 and turn == 2)):
                                 if king_moved[turn] == "0":
                                     passes_collision = collision_check(s, e)
                                     if passes_collision:
-                                        if abs(dx) == 3:
-                                            playable.append(s+e + " (O-O)")
-                                        if abs(dx) == 4:
-                                            playable.append(s+e + " (O-O-O)")
+                                        castleable = check_castleable(abs(dx))
+                                        if castleable:
+                                            if abs(dx) == 3:
+                                                playable.append(s+e + "(O-O)")
+                                            if abs(dx) == 4:
+                                                playable.append(s+e + "(O-O-O)")
                         else:
                             if abs(dx) <= 1 and abs(dy) <= 1:
                                 playable.append(s+e)
@@ -265,12 +287,27 @@ def find_viable_moves(stc=None):
                         if passes_collision:
                             playable.append(s+e)
                     if piece == own_pieces[2]: #pawn
+                        #move 1 forward
                         if coords[e] == empty and dx == 0 and (dy) == 1 * direction:
                             playable.append(s+e)
-                        if coords[e] == empty and dx == 0 and coords_ver.index(s[1]) == 4.5 - (2.5 * direction) and (dy) == 2 * direction and coords[f"{e[0]}{int(e[1]) + (-1 * direction)}"] == empty:
+                        #move 2 forward
+                        if coords[e] == empty and dx == 0 and sy == 4.5 - (2.5 * direction) and (dy) == 2 * direction and coords[f"{e[0]}{ey + (-1 * direction)}"] == empty:
                             playable.append(s+e)
+                        #capture
                         if coords[e] != empty and abs(dx) == 1 and (dy) == 1 * direction:
-                            playable.append(s+e) 
+                            playable.append(s+e)
+                        #en passant
+                        if coords[e] == empty and ((sy == 5 and turn == 1) or (sy == 4 and turn == 2)) and abs(dx) == 1 and (dy) == 1 * direction:
+                            if last_move != "None":
+                                epcord = f"{e[0]}{ey + (-1 * direction)}"
+                                piece_underneath = coords[epcord]
+                                last_moved_piece = last_move[0]
+                                if piece_underneath in opponent_pieces and piece_underneath[1:] == "pawn":
+                                    last_move_stc = last_move[1][:2]
+                                    last_move_edc = last_move[1][2:4]
+                                    last_move_dy = int(last_move_edc[1]) - int(last_move_stc[1]) 
+                                    if piece_underneath == last_moved_piece and epcord == last_move_edc and abs(last_move_dy) == 2:
+                                        playable.append(s+e + "(enp:" + epcord) 
                     if piece == own_pieces[3]: #knight
                         if abs(dx) == 1 and abs(dy) == 2:
                             playable.append(s+e)
@@ -299,46 +336,16 @@ def find_viable_moves(stc=None):
         #check if move escapes check
         piece = stc_p
         ghost_move(move)
-        check = check_check(0)
+        check = check_check()
         if check == 0:
             viable.append(move)
         #revert move
         if "(" in move and ")" in move:
-            uncastle(move)
-        coords[move[:2]] = stc_p
-        coords[move[2:4]] = edc_p
+            revert()
+        else:
+            coords[move[:2]] = stc_p
+            coords[move[2:4]] = edc_p
     return viable
-
-#game operations
-def save_game(save_file_name):
-    saved = 0
-    while saved == 0:
-        file_name = save_file_name
-        try:
-            with open(rf"{save_folder}\{file_name}.txt", "x") as file:
-                file.write(f"turn={turn}\nmoves={moves}\nking_moved={king_moved[1]}/{king_moved[2]}\n---")
-                for coord in coords:
-                    coord_piece = coords[coord]
-                    i = pieces.index(coord_piece)
-                    piece_name = piece_values[i]
-                    line = coord + "=" + piece_name
-                    file.write(f"\n{line}")
-                saved = 1
-                print(f"Game successfully saved to [{file_name}.txt].\n")
-                exists = 0
-        except FileExistsError:
-            print(f"[{file_name}.txt] already exists, please enter another name.")
-            exists = 1
-        return exists             
-def save_current_state():
-    with open(rf"{current_folder}\move{moves}.txt", "x") as file:
-        file.write(f"turn={turn}\nmoves={moves}\nking_moved={king_moved[1]}/{king_moved[2]}\n---")
-        for coord in coords:
-            coord_piece = coords[coord]
-            i = pieces.index(coord_piece)
-            piece_name = piece_values[i]
-            line = coord + "=" + piece_name
-            file.write(f"\n{line}")
 
 #after turn reset
 def afterturn_reset():
@@ -349,13 +356,26 @@ def afterturn_reset():
     stalemate = 0 
     promotion = 0
 
+def enpassant(move):
+    global coords
+    stc = move[:2]
+    edc = move[2:4]
+
+    i = move.index(":") + 1
+    captured_pawn = move[i:i+2]
+
+    coords[stc] = empty
+    coords[captured_pawn] = empty
+    if turn == 1:
+        coords[edc] = wpawn
+    else:
+        coords[edc] = bpawn
+
 def castle(move):
     global coords
     stc = move[:2]
-    player_data = PlayerData[turn]
-    player = player_data["name"]
     coords[stc] = empty 
-    if player == "WHITE":
+    if turn == 1:
         if "(O-O-O)" in move:
             coords["a1"] = empty
             coords["c1"] = wking
@@ -364,7 +384,7 @@ def castle(move):
             coords["h1"] = empty
             coords["g1"] = wking
             coords["f1"] = wrook
-    if player == "BLACK":
+    else:
         if "(O-O-O)" in move:
             coords["a8"] = empty
             coords["c8"] = bking
@@ -374,25 +394,6 @@ def castle(move):
             coords["g8"] = bking
             coords["f8"] = brook
 
-def uncastle(move):
-    global coords
-    player_data = PlayerData[turn]
-    player = player_data["name"]
-    if player == "WHITE":
-        if "(O-O-O)" in move:
-            coords["c1"] = empty
-            coords["d1"] = empty  
-        if "(O-O)" in move:
-            coords["g1"] = empty
-            coords["f1"] = empty
-    if player == "BLACK":
-        if "(O-O-O)" in move:
-            coords["c8"] = empty
-            coords["d8"] = empty 
-        if "(O-O)" in move:
-            coords["g8"] = empty
-            coords["f8"] = empty
-
 #move functions
 def play_move(move, promoted_to=None):
     stc = move[:2]
@@ -400,55 +401,47 @@ def play_move(move, promoted_to=None):
     piece = coords[stc]
     if piece[1:] == "king":
         king_moved[turn] = "1"
-    capture = capture_check(edc)
     promotion = promotion_check(stc, edc)
     if promotion == 1:
-        if piece == wpawn:
-            color = "w"
-        if piece == bpawn:
-            color = "b"
+        color = piece[0]
         new_piece = color + promoted_to
         coords[edc] =  new_piece
         coords[stc] = empty
     else:
         ghost_move(move)
-
-    piece_name = piece[1:].capitalize()
-    if capture == 0: 
-        print(f"- {player} plays [{piece_name}] to [{edc}].\n")
-    elif capture == 1:
-        i = pieces.index(coords[edc])
-        captured_piece_name = piece_values[i][1:].capitalize()
-        print(f"- {player} plays [{piece_name}] to [{edc}] and captures the [{captured_piece_name}]!\n")
-    if promotion == 1: 
-        chosen_piece = new_piece[1:].capitalize()
-        print(f"- The {player} [{piece_name}] has been promoted to [{chosen_piece.capitalize()}]!\n")     
+    global last_move
+    last_move = [piece, move]
 
 def ghost_move(move):
     stc = move[:2]
     edc = move[2:4]
     piece = coords[stc]
     if "(" in move and ")" in move:
-        castle(move)
+        if "O" in move:
+            castle(move)
+        if "enp" in move:
+            enpassant(move)
     else:
         coords[edc] = piece
         coords[stc] = empty   
 
+def revert():
+    global coords
+    file = f"move{moves}.txt"
+    coords = load_data(current_folder, file)
+
 def undo_move():
     global coords
-    file_exists = 0
-    for file in os.listdir(current_game_path):
-        if file == f"move{moves-1}.txt":
-            file_exists = 1
-            coords = load_data(current_folder, file)
-            break
-    if file_exists == 0:
-        print("Previous move does not exist.\n")
-    else:
+    file = f"move{moves-1}.txt"
+    try:
+        coords = load_data(current_folder, file)
         file = f"move{moves+1}.txt"
         file_path = os.path.join(current_game_path, file)
         if os.path.isfile(file_path):
             os.remove(file_path)
+        file_exists = 1
+    except:
+        file_exists = 0
     return file_exists
 
 def try_move(input, promoted_to=None):
@@ -485,6 +478,37 @@ def try_move(input, promoted_to=None):
 def default_game():
     global coords
     coords = load_data(perma_folder, "default.txt")
+
+#save current         
+def save_current_state():
+    with open(rf"{current_folder}\move{moves}.txt", "x") as file:
+        file.write(write_variables())
+        for coord in coords:
+            coord_piece = coords[coord]
+            i = pieces.index(coord_piece)
+            piece_name = piece_values[i]
+            line = coord + "=" + piece_name
+            file.write(f"\n{line}")
+
+#save game
+def save_game(save_file_name):
+    saved = 0
+    while saved == 0:
+        file_name = save_file_name
+        try:
+            with open(rf"{save_folder}\{file_name}.txt", "x") as file:
+                file.write(write_variables())
+                for coord in coords:
+                    coord_piece = coords[coord]
+                    i = pieces.index(coord_piece)
+                    piece_name = piece_values[i]
+                    line = coord + "=" + piece_name
+                    file.write(f"\n{line}")
+                saved = 1
+                exists = 0
+        except FileExistsError:
+            exists = 1
+        return exists    
 
 #load & start game
 def load_game(savefilename=None):
@@ -532,7 +556,7 @@ def load_game(savefilename=None):
     afterturn_reset()
     save_current_state()
 
-    check = check_check(1)
+    check = check_check()
     mate_check(check)
     
     return message

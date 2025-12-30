@@ -84,7 +84,6 @@ def ask_string(title, label):
 
     return result["value"]
 def ask_yes_no(title, message):
-
     result = {"value": False}
 
     text_size = len(message) * charpixel
@@ -151,6 +150,51 @@ def notify(title, label):
     root.bind("<Return>", lambda event: close())
 
     root.mainloop()
+def ask_promo(title, message):
+    result = {"value": None}
+
+    text_size = len(message) * charpixel
+    size = minimum + text_size
+
+    def queen():
+        result["value"] = "queen"
+        root.destroy()
+    def rook():
+        result["value"] = "rook"
+        root.destroy()
+    def bishop():
+        result["value"] = "bishop"
+        root.destroy()
+    def knight():
+        result["value"] = "knight"
+        root.destroy()
+        
+    root = tk.Tk()
+    root.title(title)
+    root.geometry(f"{size+100}x90")
+    root.resizable(False, False)
+
+    # center window
+    root.update_idletasks()
+    w = root.winfo_width()
+    h = root.winfo_height()
+    x = (root.winfo_screenwidth() - w) // 2
+    y = (root.winfo_screenheight() - h) // 2
+    root.geometry(f"{w}x{h}+{x}+{y}")
+
+    tk.Label(root, text=message, font=("Arial", 12)).pack(pady=10)
+
+    frame = tk.Frame(root)
+    frame.pack(pady=(5, 0))
+
+    tk.Button(frame, text="Queen", width=10, command=queen).pack(side="left", padx=5)
+    tk.Button(frame, text="Rook", width=10, command=rook).pack(side="left", padx=5)
+    tk.Button(frame, text="Bishop", width=10, command=bishop).pack(side="right", padx=5)
+    tk.Button(frame, text="Knight", width=10, command=knight).pack(side="right", padx=5)
+
+    root.mainloop()
+
+    return result["value"]
 
 pygame.init()
 pygame.mixer.pre_init(44100, -16, 2, 512)
@@ -248,8 +292,8 @@ def save_game_dialog():
         file_name = ask_string(title, f"[{file_name}.txt] already exists, please enter another name:")
         if file_name == None or file_name == "":
             return
-        exists = engine.save_game(file_name)
-        notify(title, f"Saved game to [{file_name}.txt]")
+    exists = engine.save_game(file_name)
+    notify(title, f"Saved game to [{file_name}.txt]")
 
 def load_game_dialog():
     file_name = ask_string(title, "Load save file:")
@@ -294,12 +338,12 @@ quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, 
 previous_palette = Button((START_X + (BUTTON_W + GAP) *5 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette-1", lambda: switch_palette(-1))
 next_palette = Button((START_X + (BUTTON_W + GAP) *6 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette+1", lambda: switch_palette(1))
 
-def end_check(popup=0, print=False):
+def end_check(popup=0):
     player_data = engine.PlayerData[engine.turn]
     player = player_data["name"]
     opponent = player_data["opponent"]
-    is_check = engine.check_check(0)
-    mate = engine.mate_check(is_check, print)
+    is_check = engine.check_check()
+    mate = engine.mate_check(is_check)
     end = False
     if mate != 0:
         end = True
@@ -318,21 +362,22 @@ def make_move(move):
     stc = move[:2]
     edc = move[2:4]
 
-    is_castle = engine.coords[edc] in own_pieces
-    if is_castle:
-        dx = engine.coords_hor.index(edc[0]) - engine.coords_hor.index(stc[0])
-        if abs(dx) == 3:
-            move = move + " (O-O)"
-        if abs(dx) == 4:
-            move = move + " (O-O-O)"
+    viable_moves = engine.find_viable_moves(stc)
+
+    for viable_move in viable_moves:
+        if viable_move[:4] == move:
+            move = viable_move
+
+    is_castle = "O" in move
+    is_enpassant = "enp" in move
     is_capture = engine.coords[edc] in opponent_pieces
     is_promotion = engine.promotion_check(stc, edc)
     if is_promotion:
-        new_piece = ask_string(title, "Promote pawn to: ").strip().lower()
+        new_piece = ask_promo(title, "Promote pawn to: ")
         engine.try_move(move, new_piece)
     else:
         engine.try_move(move)
-    is_check = engine.check_check(0)
+    is_check = engine.check_check()
     is_end = end_check(0)
 
     #sounds
@@ -340,7 +385,7 @@ def make_move(move):
         SOUNDS["end"].play()
     elif is_check == 1:
         SOUNDS["check"].play()
-    elif is_capture:
+    elif is_capture or is_enpassant:
         SOUNDS["capture"].play()
     elif is_castle:
         SOUNDS["castle"].play()
@@ -433,7 +478,7 @@ def draw_legal_moves_at(offset_x, offset_y, flipped):
         x, y = square_to_screen(sq, offset_x, offset_y, flipped)
         screen.blit(overlay, (x, y))
 
-def draw(end):
+def draw(end=None):
     screen.fill(UI_COLOR)
     #boards
     draw_board_at(BOARD_1_X, BOARD_Y, flipped=False)
@@ -448,7 +493,7 @@ def draw(end):
     draw_selection_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #checkmate
-    if end:
+    if end !=None and end:
         draw_checkmate_at(BOARD_1_X, BOARD_Y, flipped=False)
         draw_checkmate_at(BOARD_2_X, BOARD_Y, flipped=True)
     
@@ -474,13 +519,11 @@ def draw(end):
 
 selected_square = None
 legal_targets = []
+end = end_check(1)
+
 running = True
 
 while running:
-    if end_notified == 0:
-        end = end_check(1, True)
-        if end:
-            end_notified = 1
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -513,6 +556,13 @@ while running:
                 # reset selection
                 selected_square = None
                 legal_targets = []
+
+            if end_notified == 0:
+                end = end_check(0)
+                if end:
+                    draw(end)
+                    end = end_check(1)
+                    end_notified = 1
 
     save_button.update()
     load_button.update()
