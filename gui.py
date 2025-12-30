@@ -26,8 +26,9 @@ DARK  = colors.DARK
 BORDER_COLOR = colors.BORDER_COLOR
 UI_COLOR = colors.UI_COLOR
 LEGAL_MOVES_COLOR = colors.LEGAL_MOVES_COLOR
-CHECKMATE_COLOR = colors.CHECKMATE_COLOR
 SELECTION_COLOR = colors.SELECTION_COLOR
+LAST_MOVE_COLOR = colors.LAST_MOVE_COLOR
+CHECKMATE_COLOR = colors.CHECKMATE_COLOR
 
 ##config
 title = config.title
@@ -414,7 +415,6 @@ def square_to_screen(square, offset_x, offset_y, flipped):
 def screen_to_square(mx, my):
     if my < BOARD_Y or my >= BOARD_Y + BOARD_SIZE:
         return None
-
     if BOARD_1_X < mx < BOARD_1_X + BOARD_SIZE:
         offset_x = BOARD_1_X
         flipped = False
@@ -423,10 +423,8 @@ def screen_to_square(mx, my):
         flipped = True
     else:
         return None
-
     file = (mx - offset_x) // SQ
     rank = (my - BOARD_Y) // SQ
-
     if flipped:
         file = 7 - file
     rank = 7 - rank if not flipped else rank
@@ -448,6 +446,16 @@ def draw_pieces_at(offset_x, offset_y, flipped):
             screen.blit(PIECE_IMAGES[piece_assets[piece]], (x, y))
 
 def draw_selection_at(offset_x, offset_y, flipped):
+    if not selected_square:
+        return
+
+    overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
+    overlay.fill(SELECTION_COLOR)
+
+    x, y = square_to_screen(selected_square, offset_x, offset_y, flipped)
+    screen.blit(overlay, (x, y))
+
+def last_move_at(offset_x, offset_y, flipped):
     if not selected_square:
         return
 

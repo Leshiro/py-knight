@@ -6,6 +6,7 @@ dark_gray = (30, 30, 30)
 green_tint = (50, 180, 50, 120)
 red_tint = (200, 50, 50, 120)
 blue_tint = (30, 144, 255, 120)
+yellow_tint = (255, 255, 0, 120)
 
 #board palettes
 BOARD_PALETTES = {
@@ -39,4 +40,5 @@ BORDER_COLOR = dark_gray
 UI_COLOR = dark_gray
 LEGAL_MOVES_COLOR = green_tint
 SELECTION_COLOR = red_tint
+LAST_MOVE_COLOR = yellow_tint
 CHECKMATE_COLOR = blue_tint
