@@ -336,7 +336,7 @@ undo_button = Button((START_X + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, 
 restart_button = Button((START_X + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
 quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
 previous_palette = Button((START_X + (BUTTON_W + GAP) *5 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette-1", lambda: switch_palette(-1))
-next_palette = Button((START_X + (BUTTON_W + GAP) *6 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette+1", lambda: switch_palette(1))
+next_palette = Button((START_X + (BUTTON_W + GAP) *6   , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette+1", lambda: switch_palette(1))
 
 def end_check(popup=0):
     player_data = engine.PlayerData[engine.turn]

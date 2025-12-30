@@ -307,7 +307,7 @@ def find_viable_moves(stc=None):
                                     last_move_edc = last_move[1][2:4]
                                     last_move_dy = int(last_move_edc[1]) - int(last_move_stc[1]) 
                                     if piece_underneath == last_moved_piece and epcord == last_move_edc and abs(last_move_dy) == 2:
-                                        playable.append(s+e + "(enp:" + epcord) 
+                                        playable.append(s+e + "(enp:" + epcord + ")") 
                     if piece == own_pieces[3]: #knight
                         if abs(dx) == 1 and abs(dy) == 2:
                             playable.append(s+e)
