@@ -436,9 +436,6 @@ def undo_move():
     try:
         coords = load_data(current_folder, file)
         file = f"move{moves+1}.txt"
-        file_path = os.path.join(current_game_path, file)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
         file_exists = 1
     except:
         file_exists = 0
@@ -481,7 +478,7 @@ def default_game():
 
 #save current         
 def save_current_state():
-    with open(rf"{current_folder}\move{moves}.txt", "x") as file:
+    with open(rf"{current_folder}\move{moves}.txt", "w") as file:
         file.write(write_variables())
         for coord in coords:
             coord_piece = coords[coord]

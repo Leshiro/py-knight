@@ -330,8 +330,8 @@ def switch_palette(value):
     LIGHT = board_colors[0]
     DARK  = board_colors[1]
 
-save_button = Button((START_X, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
-load_button = Button((START_X + BUTTON_W + GAP, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
+save_button = Button((START_X + (BUTTON_W + GAP) * 0, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
+load_button = Button((START_X + (BUTTON_W + GAP) * 1, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
 undo_button = Button((START_X + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Undo", lambda: confirm_undo())
 restart_button = Button((START_X + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
 quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
