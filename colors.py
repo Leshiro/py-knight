@@ -1,6 +1,7 @@
 #colors
 black = (0, 0, 0)
 dark_gray = (30, 30, 30)
+gray = (80, 80, 80)
 
 #tints
 green_tint = (50, 180, 50, 150)
@@ -50,6 +51,7 @@ DARK = BOARD_COLORS[1]
 
 BORDER_COLOR = dark_gray
 UI_COLOR = dark_gray
+COORDS_COLOR = gray
 LEGAL_MOVES_COLOR = green_tint
 SELECTION_COLOR = red_tint
 LAST_MOVE_COLOR = yellow_tint

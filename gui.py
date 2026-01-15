@@ -1,4 +1,4 @@
-#import
+#imports
 import engine
 import assets
 import colors
@@ -25,6 +25,7 @@ DARK  = colors.DARK
 
 BORDER_COLOR = colors.BORDER_COLOR
 UI_COLOR = colors.UI_COLOR
+COORDS_COLOR = colors.COORDS_COLOR
 LEGAL_MOVES_COLOR = colors.LEGAL_MOVES_COLOR
 SELECTION_COLOR = colors.SELECTION_COLOR
 LAST_MOVE_COLOR = colors.LAST_MOVE_COLOR
@@ -247,6 +248,7 @@ def load_images(piece_set):
     return images
 
 Start_Game()
+
 SOUNDS["start"].play()
 PIECE_IMAGES = load_images(piece_set)
 
@@ -439,6 +441,27 @@ def draw_board_at(offset_x, offset_y, flipped):
             color = LIGHT if (rank + file) % 2 == 0 else DARK
             pygame.draw.rect(screen, color, (offset_x + draw_file * SQ, offset_y + draw_rank * SQ, SQ, SQ))
 
+def draw_files_at(offset_x, offset_y, flipped):
+    files = "abcdefgh"
+    files = files[::-1] if flipped else files
+    for file in range(8):
+        label = font.render(files[file], True, COORDS_COLOR)
+        x = offset_x + file * SQ + SQ - label.get_width() - 2
+        y = offset_y + 7 * SQ + SQ - label.get_height() - 2
+        screen.blit(label, (x, y))
+
+def draw_ranks_at(offset_x, offset_y, flipped):
+    for rank in range(8):
+        text =  str(rank + 1) if flipped else str(8 - rank)
+        label = font.render(text, True, COORDS_COLOR)
+        x = offset_x + 2
+        y = offset_y + rank * SQ + 2
+        screen.blit(label, (x, y))
+
+def draw_coordinates_at(offset_x, offset_y, flipped):
+    draw_files_at(offset_x, offset_y, flipped)
+    draw_ranks_at(offset_x, offset_y, flipped)
+
 def draw_pieces_at(offset_x, offset_y, flipped):
     for square, piece in engine.coords.items():
         if piece != engine.empty:
@@ -495,6 +518,10 @@ def draw(end=None):
     #boards
     draw_board_at(BOARD_1_X, BOARD_Y, flipped=False)
     draw_board_at(BOARD_2_X, BOARD_Y, flipped=True)
+
+    #coordinates
+    draw_coordinates_at(BOARD_1_X, BOARD_Y, flipped=False)
+    draw_coordinates_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #legal moves
     if engine.turn == 1:

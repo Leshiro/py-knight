@@ -97,6 +97,90 @@ def load_data(folder, file):
                 coords[f"{coords_hor[a]}{coords_ver[i]}"] = coords_list[(i - 1) * 8 + a]
         return coords
 
+#default game
+def default_game():
+    global coords
+    coords = load_data(perma_folder, "default.txt")
+
+#save current         
+def save_current_state():
+    with open(rf"{current_folder}\move{moves}.txt", "w") as file:
+        file.write(write_variables())
+        for coord in coords:
+            coord_piece = coords[coord]
+            i = pieces.index(coord_piece)
+            piece_name = piece_values[i]
+            line = coord + "=" + piece_name
+            file.write(f"\n{line}")
+
+#save game
+def save_game(save_file_name):
+    saved = 0
+    while saved == 0:
+        file_name = save_file_name
+        try:
+            with open(rf"{save_folder}\{file_name}.txt", "x") as file:
+                file.write(write_variables())
+                for coord in coords:
+                    coord_piece = coords[coord]
+                    i = pieces.index(coord_piece)
+                    piece_name = piece_values[i]
+                    line = coord + "=" + piece_name
+                    file.write(f"\n{line}")
+                saved = 1
+                exists = 0
+        except FileExistsError:
+            exists = 1
+        return exists    
+
+#load & start game
+def load_game(savefilename=None):
+    #create saves folder
+    cwd = os.getcwd()
+    save_path = rf"{cwd}\{save_folder}"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
+    #create current folder
+    if not os.path.exists(current_folder):
+        os.makedirs(current_folder)
+        
+    #clear current folder
+    global current_game_path
+    current_game_path = rf"{cwd}\{current_folder}"
+    for file in os.listdir(current_game_path):
+        file_path = os.path.join(current_game_path, file)
+        if os.path.isfile(file_path) and file[:4] == "move":
+            os.remove(file_path)
+
+    #load save data
+    global coords
+    if savefilename != None:  
+        save_file = savefilename
+        save_file = save_file.lower().strip()
+        if save_file[-4:] != ".txt":
+            save_file = save_file + ".txt"
+        #load save file
+        try: 
+            coords = load_data(save_folder, save_file)
+            message = (f"[{save_file}] loaded successfully.")
+        except FileNotFoundError:
+            if save_file != ".txt":   
+                message = (f"Save file [{save_file}] does not exist.")
+                return message
+        except:
+            message = (f"Save file [{save_file}] is corrupted.")
+            return message
+    else:
+        default_game()
+        message = None
+
+    afterturn_reset()
+    save_current_state()
+    return message
+
+### CHESS RULES
+
 #collision checks
 def diagonal_collision_check(s, e):
     collisions = 0
@@ -470,90 +554,3 @@ def try_move(input, promoted_to=None):
     own_pieces = player_data["pieces"]
     opponent_pieces = player_data["opponent_pieces"]
     direction = player_data["direction"]
-
-#default game
-def default_game():
-    global coords
-    coords = load_data(perma_folder, "default.txt")
-
-#save current         
-def save_current_state():
-    with open(rf"{current_folder}\move{moves}.txt", "w") as file:
-        file.write(write_variables())
-        for coord in coords:
-            coord_piece = coords[coord]
-            i = pieces.index(coord_piece)
-            piece_name = piece_values[i]
-            line = coord + "=" + piece_name
-            file.write(f"\n{line}")
-
-#save game
-def save_game(save_file_name):
-    saved = 0
-    while saved == 0:
-        file_name = save_file_name
-        try:
-            with open(rf"{save_folder}\{file_name}.txt", "x") as file:
-                file.write(write_variables())
-                for coord in coords:
-                    coord_piece = coords[coord]
-                    i = pieces.index(coord_piece)
-                    piece_name = piece_values[i]
-                    line = coord + "=" + piece_name
-                    file.write(f"\n{line}")
-                saved = 1
-                exists = 0
-        except FileExistsError:
-            exists = 1
-        return exists    
-
-#load & start game
-def load_game(savefilename=None):
-    #create saves folder
-    cwd = os.getcwd()
-    save_path = rf"{cwd}\{save_folder}"
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-
-    #create current folder
-    if not os.path.exists(current_folder):
-        os.makedirs(current_folder)
-        
-    #clear current folder
-    global current_game_path
-    current_game_path = rf"{cwd}\{current_folder}"
-    for file in os.listdir(current_game_path):
-        file_path = os.path.join(current_game_path, file)
-        if os.path.isfile(file_path) and file[:4] == "move":
-            os.remove(file_path)
-
-    #load save data
-    global coords
-    if savefilename != None:  
-        save_file = savefilename
-        save_file = save_file.lower().strip()
-        if save_file[-4:] != ".txt":
-            save_file = save_file + ".txt"
-        #load save file
-        try: 
-            coords = load_data(save_folder, save_file)
-            message = (f"[{save_file}] loaded successfully.")
-        except FileNotFoundError:
-            if save_file != ".txt":   
-                message = (f"Save file [{save_file}] does not exist.")
-                return message
-        except:
-            message = (f"Save file [{save_file}] is corrupted.")
-            return message
-    else:
-        default_game()
-        message = None
-        
-    #at start
-    afterturn_reset()
-    save_current_state()
-
-    check = check_check()
-    mate_check(check)
-    
-    return message
