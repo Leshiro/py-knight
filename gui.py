@@ -25,6 +25,8 @@ sounds = assets.sounds
 LIGHT = colors.LIGHT
 DARK  = colors.DARK
 
+BLACK = colors.black
+
 BORDER_COLOR = colors.BORDER_COLOR
 UI_COLOR = colors.UI_COLOR
 COORDS_COLOR = colors.COORDS_COLOR
@@ -48,6 +50,15 @@ UI_HEIGHT = config.UI_HEIGHT
 SQ = BOARD_SIZE // 8
 SIZE = BOARD_SIZE + UI_HEIGHT
 
+#panels
+RIGHT_PANEL = config.RIGHT_PANEL
+LEFT_PANEL = config.LEFT_PANEL
+BOTTOM_PANEL = config.BOTTOM_PANEL
+TOP_PANEL = config.TOP_PANEL
+
+PANELS_X = LEFT_PANEL + RIGHT_PANEL
+PANELS_Y = BOTTOM_PANEL + TOP_PANEL
+
 #borders & separator
 BORDER_THICKNESS = config.BORDER_THICKNESS
 SEPARATOR = config.SEPARATOR
@@ -55,11 +66,11 @@ SEPARATOR = config.SEPARATOR
 #board position
 BOARD_1_X = 0 + BORDER_THICKNESS
 BOARD_2_X = BOARD_SIZE + SEPARATOR + BORDER_THICKNESS
-BOARD_Y = 0 + BORDER_THICKNESS
+BOARD_Y = 0 + BORDER_THICKNESS + TOP_PANEL
 
 #window size
 WINDOW_WIDTH = BORDER_THICKNESS * 2 + BOARD_SIZE * 2 + SEPARATOR
-WINDOW_HEIGHT = BORDER_THICKNESS + BOARD_SIZE + UI_HEIGHT
+WINDOW_HEIGHT = BORDER_THICKNESS + BOARD_SIZE + UI_HEIGHT + TOP_PANEL
 
 #buttons
 BUTTON_W = config.BUTTON_W
@@ -260,7 +271,7 @@ def ask_promo(title, message):
 pygame.init()
 
 font = pygame.font.SysFont(None, 28)
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption(f"{title}")
 pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
 clock = pygame.time.Clock()
@@ -658,7 +669,7 @@ def draw_legal_moves_at(offset_x, offset_y, flipped):
 
 #main draw function
 def draw(end=None):
-    screen.fill(UI_COLOR)
+    screen.fill((BLACK))
     #boards
     draw_board_at(BOARD_1_X, BOARD_Y, flipped=False)
     draw_board_at(BOARD_2_X, BOARD_Y, flipped=True)
@@ -690,6 +701,8 @@ def draw(end=None):
 
     #border
     pygame.draw.rect(screen, BORDER_COLOR, (0, 0, WINDOW_WIDTH, WINDOW_HEIGHT), BORDER_THICKNESS)
+    #separator
+    pygame.draw.rect(screen, UI_COLOR, (0, 0, BOARD_2_X, WINDOW_HEIGHT), SEPARATOR)
     #UI menu
     pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
 
