@@ -68,8 +68,7 @@ START_X = config.BUTTON_START_X
 UI_Y = BOARD_Y + BOARD_SIZE
 UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
 
-###
-
+#tkinter windows
 def ask_string(title, label):
     result = {"value": None}
 
@@ -218,15 +217,16 @@ def ask_promo(title, message):
 
     return result["value"]
 
+#pygame start
 pygame.init()
 
-#pygame start
 font = pygame.font.SysFont(None, 28)
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption(title)
 #no icon yet - pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
 clock = pygame.time.Clock()
 
+#sounds
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
 
@@ -234,6 +234,7 @@ SOUNDS = {}
 for sound in sounds:
     SOUNDS.update({sound : pygame.mixer.Sound(f"{sound_folder}{sounds[sound]}")})
 
+#start functions
 def Start_Game(save=None):
     global end_notified
     end_notified = 0
@@ -247,11 +248,12 @@ def load_images(piece_set):
         images[name] = pygame.transform.smoothscale(img, (SQ, SQ))
     return images
 
+#start
 Start_Game()
-
 SOUNDS["start"].play()
 PIECE_IMAGES = load_images(piece_set)
 
+#define button classes
 class Button:
     def __init__(self, rect, text, action):
         self.rect = pygame.Rect(rect)
@@ -279,9 +281,120 @@ class Button:
 
     #do something on click
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and self.hovered:
-            self.action()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                self.action()
+                return True
+        return False
+    
+class ExpandableButton:
+    def __init__(self, main_button, child_buttons, padding=8, gap=8):
+        self.main_button = main_button
+        self.child_buttons = child_buttons
+        self.bg_color = UI_COLOR
+        self.padding = padding
+        self.gap = gap
+        self.expanded = False
+        self.menu_rect = pygame.Rect(0, 0, 0, 0)
 
+        # main click toggles
+        self.main_button.action = self.toggle
+        self.reposition_children()
+
+    def toggle(self):
+        self.expanded = not self.expanded
+
+    def reposition_children(self):
+        if not self.child_buttons:
+            self.menu_rect = pygame.Rect(0, 0, 0, 0)
+            return
+
+        #compute total width of children row
+        child_w = sum(b.rect.width for b in self.child_buttons)
+        total_gap = self.gap * (len(self.child_buttons) - 1)
+        row_w = child_w + total_gap
+        row_h = max(b.rect.height for b in self.child_buttons)
+
+        #background rect size (+ padding)
+        bg_w = row_w + self.padding * 2
+        bg_h = row_h + self.padding * 2
+
+        #place background above main, centered to main
+        bg_x = self.main_button.rect.centerx - bg_w // 2
+        bg_y = self.main_button.rect.top - bg_h - self.gap  # small gap above main
+        self.menu_rect = pygame.Rect(bg_x, bg_y, bg_w, bg_h)
+
+        #place children inside background
+        x = self.menu_rect.left + self.padding
+        y = self.menu_rect.top + self.padding + (row_h - self.child_buttons[0].rect.height) // 2
+
+        for b in self.child_buttons:
+            b.rect.topleft = (x, self.menu_rect.top + self.padding + (row_h - b.rect.height) // 2)
+            x += b.rect.width + self.gap
+
+    def update(self):
+        self.main_button.update()
+        if self.expanded:
+            for b in self.child_buttons:
+                b.update()
+
+    def draw(self, screen, font):
+        #draw menu first (behind buttons) then children, then main
+        if self.expanded:
+            pygame.draw.rect(screen, self.bg_color, self.menu_rect)
+            pygame.draw.rect(screen, (255, 255, 255), self.menu_rect, 2)
+
+            for b in self.child_buttons:
+                b.draw(screen, font)
+        self.main_button.draw(screen, font)
+
+    def handle_event(self, event):
+        used = False
+        if self.expanded:
+            for b in self.child_buttons:
+                if b.handle_event(event):
+                    return True  #consume click immediately
+        if self.main_button.handle_event(event):
+            return True
+        if event.type == pygame.MOUSEBUTTONDOWN and self.expanded:
+            if self.menu_rect.collidepoint(event.pos):
+                return True
+            if not self.main_button.rect.collidepoint(event.pos):
+                self.expanded = False
+                return True
+        return used
+
+#create buttons & expandable buttons
+save_button = Button((START_X + (BUTTON_W + GAP) * 0, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
+load_button = Button((START_X + (BUTTON_W + GAP) * 1, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
+undo_button = Button((START_X + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Undo", lambda: confirm_undo())
+restart_button = Button((START_X + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
+quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
+
+palette_button = Button((START_X + (BUTTON_W + GAP) * 5, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette", lambda: None)
+palette_prev = Button((0, 0, BUTTON_W, BUTTON_H), "Previous", lambda: switch_palette(-1))
+palette_next = Button((0, 0, BUTTON_W, BUTTON_H), "Next", lambda: switch_palette(1))
+palette_menu = ExpandableButton(palette_button, [palette_prev, palette_next])
+
+pieces_button = Button((START_X + (BUTTON_W + GAP) * 6, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Pieces", lambda: None)
+pieces_prev = Button((0, 0, BUTTON_W, BUTTON_H), "Previous", lambda: switch_piece_set(-1))
+pieces_next = Button((0, 0, BUTTON_W, BUTTON_H), "Next", lambda: switch_piece_set(1))
+pieces_menu = ExpandableButton(pieces_button, [pieces_prev, pieces_next])
+
+#list of buttons
+buttons = [
+    save_button, 
+    load_button, 
+    undo_button, 
+    restart_button, 
+    quit_button,
+    ]
+expandable_menus = [
+    palette_menu, 
+    pieces_menu,
+    ]
+
+#ui functions
 def save_game_dialog():
     exists = 1
     file_name = ask_string(title, "Enter save file name:")
@@ -335,15 +448,7 @@ def switch_piece_set(value):
     piece_set = assets.switch_piece_set(value)
     PIECE_IMAGES = load_images(piece_set)
 
-save_button = Button((START_X + (BUTTON_W + GAP) * 0, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
-load_button = Button((START_X + (BUTTON_W + GAP) * 1, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
-undo_button = Button((START_X + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Undo", lambda: confirm_undo())
-restart_button = Button((START_X + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
-quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
-previous_palette = Button((START_X + (BUTTON_W + GAP) *5 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette-1", lambda: switch_palette(-1))
-next_palette = Button((START_X + (BUTTON_W + GAP) *6   , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette+1", lambda: switch_palette(1))
-previous_set = Button((START_X + (BUTTON_W + GAP) *7 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Pieces-1", lambda: switch_piece_set(-1))
-next_set = Button((START_X + (BUTTON_W + GAP) *8 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Pieces+1", lambda: switch_piece_set(1))
+#engine related functions
 
 def end_check(popup=0):
     player_data = engine.PlayerData[engine.turn]
@@ -433,6 +538,7 @@ def screen_to_square(mx, my):
 
     return chr(ord('a') + file) + str(rank + 1)
 
+#drawing components
 def draw_board_at(offset_x, offset_y, flipped):
     for rank in range(8):
         for file in range(8):
@@ -513,6 +619,7 @@ def draw_legal_moves_at(offset_x, offset_y, flipped):
         x, y = square_to_screen(sq, offset_x, offset_y, flipped)
         screen.blit(overlay, (x, y))
 
+#main draw function
 def draw(end=None):
     screen.fill(UI_COLOR)
     #boards
@@ -530,8 +637,10 @@ def draw(end=None):
         draw_legal_moves_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #selection
-    draw_selection_at(BOARD_1_X, BOARD_Y, flipped=False)
-    draw_selection_at(BOARD_2_X, BOARD_Y, flipped=True)
+    if engine.turn == 1:
+        draw_selection_at(BOARD_1_X, BOARD_Y, flipped=False)
+    else: 
+        draw_selection_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #checkmate
     if end !=None and end:
@@ -548,15 +657,10 @@ def draw(end=None):
     pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
 
     #UI buttons
-    save_button.draw(screen, font)
-    load_button.draw(screen, font)
-    undo_button.draw(screen, font)
-    restart_button.draw(screen, font)
-    quit_button.draw(screen, font)
-    previous_palette.draw(screen, font)
-    next_palette.draw(screen, font)
-    previous_set.draw(screen, font)
-    next_set.draw(screen, font)
+    for button in buttons:
+        button.draw(screen, font)
+    for menu in expandable_menus:
+        menu.draw(screen, font)
 
     pygame.display.flip()
 
@@ -571,23 +675,27 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         
-        save_button.handle_event(event)
-        load_button.handle_event(event)
-        undo_button.handle_event(event)
-        restart_button.handle_event(event)
-        quit_button.handle_event(event)
-        previous_palette.handle_event(event)
-        next_palette.handle_event(event)
-        previous_set.handle_event(event)
-        next_set.handle_event(event)
+        ui_used = False #start with false
+
+        #handle button & menu events
+        for button in buttons:
+            if button.handle_event(event):
+                ui_used = True
+
+        for menu in expandable_menus:
+            if menu.handle_event(event):
+                ui_used = True
 
         #when clicked
         if event.type == pygame.MOUSEBUTTONDOWN:
-            mx, my = pygame.mouse.get_pos()
+            mx, my = event.pos
 
             square = screen_to_square(mx, my)
             if square is None:
                 continue 
+
+            if ui_used:
+                continue
 
             # first click → select piece
             if selected_square is None:
@@ -609,18 +717,15 @@ while running:
                     end = end_check(1)
                     end_notified = 1
 
-    save_button.update()
-    load_button.update()
-    undo_button.update()
-    restart_button.update()
-    quit_button.update()
-    previous_palette.update()
-    next_palette.update()
-    previous_set.update()
-    next_set.update()
+    #update buttons & menus
+    for button in buttons:
+        button.update() 
+    for menu in expandable_menus:
+        menu.update()  
 
-    draw(end)
-    
-    clock.tick(fps_limit)
+    draw(end)#draw game end (if true)
 
+    clock.tick(fps_limit) #fps limiter
+
+#quit
 pygame.quit()
