@@ -5,7 +5,9 @@ import colors
 import config
 
 import pygame
+import os
 import tkinter as tk
+from tkinter import filedialog
 
 #assets
 icon = assets.icon
@@ -171,6 +173,43 @@ def notify(title, label):
     root.bind("<Return>", lambda event: close())
 
     root.mainloop()
+
+def ask_file_open(title, initial_dir=".", filetypes=(("Text files", "*.txt"),)):
+    result = {"value": None}
+
+    def choose():
+        result["value"] = filedialog.askopenfilename(
+            title=title,
+            initialdir=initial_dir,
+            filetypes=filetypes
+        )
+        root.destroy()
+
+    root = tk.Tk()
+    root.withdraw()
+    root.after(0, choose)
+    root.mainloop()
+
+    return result["value"]
+def ask_file_save(title, initial_dir=".", filetypes=(("Text files", "*.txt"),), defaultextension=".txt"):
+    result = {"value": None}
+
+    def choose():
+        result["value"] = filedialog.asksaveasfilename(
+            title=title,
+            initialdir=initial_dir,
+            filetypes=filetypes,
+            defaultextension=defaultextension
+        )
+        root.destroy()
+
+    root = tk.Tk()
+    root.withdraw()
+    root.after(0, choose)
+    root.mainloop()
+
+    return result["value"]
+
 def ask_promo(title, message):
     result = {"value": None}
 
@@ -235,11 +274,11 @@ for sound in sounds:
     SOUNDS.update({sound : pygame.mixer.Sound(f"{sound_folder}{sounds[sound]}")})
 
 #start functions
-def Start_Game(save=None):
+def Start_Game(path=None):
     global end_notified
     end_notified = 0
-    message = engine.load_game(save)
-    return message
+    message, success = engine.load_game(path)
+    return message, success
 
 def load_images(piece_set):
     images = {}
@@ -396,24 +435,23 @@ expandable_menus = [
 
 #ui functions
 def save_game_dialog():
-    exists = 1
-    file_name = ask_string(title, "Enter save file name:")
-    if file_name == None or file_name == "":
+    path = ask_file_save(title, "Enter save file name:")
+    if not path:
         return
-    exists = engine.save_game(file_name)
-    while exists == 1:
-        file_name = ask_string(title, f"[{file_name}.txt] already exists, please enter another name:")
-        if file_name == None or file_name == "":
-            return
-    exists = engine.save_game(file_name)
-    notify(title, f"Saved game to [{file_name}.txt]")
+    else:
+        folder, filename = os.path.split(path)
+        folder_name = os.path.basename(folder)
+        engine.save_game(path)
+    notify(title, f"Saved game to [{folder_name}/{filename}]")
 
 def load_game_dialog():
-    file_name = ask_string(title, "Load save file:")
-    if file_name:
-        message = Start_Game(file_name)
+    file = ask_file_open(title, "Load save file:")
+    if file:
+        message, success = Start_Game(file)
         if message != None:
             notify(title, message)
+            if success:
+                SOUNDS["start"].play()
 
 def confirm_undo():
     confirm = ask_yes_no(title, "Undo move?")
