@@ -1,5 +1,5 @@
 #config
-title = "Chess Alpha"
+title = "PyKnight"
 author = "Leshiro"
 
 #fps
