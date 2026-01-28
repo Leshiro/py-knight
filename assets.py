@@ -2,7 +2,7 @@
 import os
 
 #icon
-icon = None
+icon = "assets/brand/logo256.png"
 
 #pieces
 piece_assets = {

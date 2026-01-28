@@ -260,9 +260,9 @@ def ask_promo(title, message):
 pygame.init()
 
 font = pygame.font.SysFont(None, 28)
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.NOFRAME)
-pygame.display.set_caption(title)
-#no icon yet - pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
+pygame.display.set_caption(f"{title}")
+pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
 clock = pygame.time.Clock()
 
 #sounds
