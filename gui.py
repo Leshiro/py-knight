@@ -25,8 +25,6 @@ sounds = assets.sounds
 LIGHT = colors.LIGHT
 DARK  = colors.DARK
 
-BLACK = colors.black
-
 BORDER_COLOR = colors.BORDER_COLOR
 UI_COLOR = colors.UI_COLOR
 COORDS_COLOR = colors.COORDS_COLOR
@@ -669,7 +667,7 @@ def draw_legal_moves_at(offset_x, offset_y, flipped):
 
 #main draw function
 def draw(end=None):
-    screen.fill((BLACK))
+    screen.fill((UI_COLOR))
     #boards
     draw_board_at(BOARD_1_X, BOARD_Y, flipped=False)
     draw_board_at(BOARD_2_X, BOARD_Y, flipped=True)
@@ -701,8 +699,6 @@ def draw(end=None):
 
     #border
     pygame.draw.rect(screen, BORDER_COLOR, (0, 0, WINDOW_WIDTH, WINDOW_HEIGHT), BORDER_THICKNESS)
-    #separator
-    pygame.draw.rect(screen, UI_COLOR, (0, 0, BOARD_2_X, WINDOW_HEIGHT), SEPARATOR)
     #UI menu
     pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
 
