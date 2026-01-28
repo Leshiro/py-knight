@@ -414,7 +414,6 @@ def load_game_dialog():
         message = Start_Game(file_name)
         if message != None:
             notify(title, message)
-        SOUNDS["start"].play()
 
 def confirm_undo():
     confirm = ask_yes_no(title, "Undo move?")
