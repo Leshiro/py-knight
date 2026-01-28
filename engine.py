@@ -55,6 +55,7 @@ PlayerData = {
     }
 }
 
+#reader
 def read_variables(coords_list):
     global moves, turn, king_moved, last_move
     turn = int(coords_list[0].replace("turn=","").strip())
@@ -68,10 +69,16 @@ def read_variables(coords_list):
         last_move = last_move.split("/")
 
 def write_variables():
+    #check if last move exist
+    if last_move == None or last_move == "None":
+        last_move_value = "None"
+    else:
+        last_move_value = f"{last_move[0]}/{last_move[1]}"
+    #write variables
     variables = f"""turn={turn}
 moves={moves}
 king_moved={king_moved[1]}/{king_moved[2]}
-last_move={last_move[0]}/{last_move[1]}
+last_move={last_move_value}
 ---"""
     return variables
 
