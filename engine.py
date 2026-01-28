@@ -130,7 +130,7 @@ def save_current_state():
 
 #save game
 def save_game(path):
-    with open(path, "x", encoding="utf-8") as file:
+    with open(path, "w", encoding="utf-8") as file:
         file.write(write_variables())
         for coord in coords:
             coord_piece = coords[coord]
