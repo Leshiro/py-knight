@@ -1,15 +1,24 @@
+#imports
+import pygame
+
 #config
 title = "PyKnight"
 author = "Leshiro"
-
-#fps
 fps_limit = 20
 
+#get current monitor res
+pygame.init()
+info = pygame.display.Info()
+MONITOR_X, MONITOR_Y = info.current_w, info.current_h
+
 #tkinter windows
-window_minimum = 180
+minimum = 180
 charpixel = 6
 
-BOARD_SIZE = 640
+#constants
+BORDER_THICKNESS = 15
+SEPARATOR = 15
+
 UI_HEIGHT = 70
 
 TOP_PANEL = 30
@@ -17,10 +26,31 @@ BOTTOM_PANEL = 30
 RIGHT_PANEL = 30
 LEFT_PANEL = 30
 
-BORDER_THICKNESS = 15
-SEPARATOR = 15
-
 BUTTON_W = 100
 BUTTON_H = 35
 BUTTON_GAP = 15
 BUTTON_START_X = 20
+
+LOGO_X = 2
+LOGO_Y = 0
+NAMELOGO_X = 2
+NAMELOGO_Y = 0
+
+#compute
+BOARD_SIZE = (MONITOR_X - 2*BORDER_THICKNESS - SEPARATOR) // 2
+
+SQ = BOARD_SIZE // 8
+SIZE = BOARD_SIZE + UI_HEIGHT
+
+PANELS_X = LEFT_PANEL + RIGHT_PANEL
+PANELS_Y = BOTTOM_PANEL + TOP_PANEL
+
+BOARD_1_X = 0 + BORDER_THICKNESS
+BOARD_2_X = BOARD_SIZE + SEPARATOR + BORDER_THICKNESS
+BOARD_Y = 0 + BORDER_THICKNESS + TOP_PANEL
+
+UI_Y = BOARD_Y + BOARD_SIZE
+UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
+
+WINDOW_WIDTH = 2*BORDER_THICKNESS + 2*BOARD_SIZE + SEPARATOR
+WINDOW_HEIGHT = BORDER_THICKNESS + BOARD_SIZE + UI_HEIGHT + TOP_PANEL

@@ -2,82 +2,15 @@
 import engine
 import assets
 import colors
-import config
+
+from assets import *
+from colors import *
+from config import *
 
 import pygame
 import os
 import tkinter as tk
 from tkinter import filedialog
-
-#assets
-icon = assets.icon
-
-piece_set = assets.chosen_set
-piece_file_format = assets.piece_file_format
-piece_assets = assets.piece_assets
-
-sound_folder = assets.sound_folder
-
-sound_folder = assets.sound_folder
-sounds = assets.sounds
-
-#colors
-LIGHT = colors.LIGHT
-DARK  = colors.DARK
-
-BORDER_COLOR = colors.BORDER_COLOR
-UI_COLOR = colors.UI_COLOR
-COORDS_COLOR = colors.COORDS_COLOR
-LEGAL_MOVES_COLOR = colors.LEGAL_MOVES_COLOR
-SELECTION_COLOR = colors.SELECTION_COLOR
-LAST_MOVE_COLOR = colors.LAST_MOVE_COLOR
-CHECKMATE_COLOR = colors.CHECKMATE_COLOR
-
-##config
-title = config.title
-author = config.author
-fps_limit = config.fps_limit
-
-#tkinter windows
-minimum = config.window_minimum
-charpixel = config.charpixel
-
-#board & square size
-BOARD_SIZE = config.BOARD_SIZE
-UI_HEIGHT = config.UI_HEIGHT
-SQ = BOARD_SIZE // 8
-SIZE = BOARD_SIZE + UI_HEIGHT
-
-#panels
-RIGHT_PANEL = config.RIGHT_PANEL
-LEFT_PANEL = config.LEFT_PANEL
-BOTTOM_PANEL = config.BOTTOM_PANEL
-TOP_PANEL = config.TOP_PANEL
-
-PANELS_X = LEFT_PANEL + RIGHT_PANEL
-PANELS_Y = BOTTOM_PANEL + TOP_PANEL
-
-#borders & separator
-BORDER_THICKNESS = config.BORDER_THICKNESS
-SEPARATOR = config.SEPARATOR
-
-#board position
-BOARD_1_X = 0 + BORDER_THICKNESS
-BOARD_2_X = BOARD_SIZE + SEPARATOR + BORDER_THICKNESS
-BOARD_Y = 0 + BORDER_THICKNESS + TOP_PANEL
-
-#window size
-WINDOW_WIDTH = BORDER_THICKNESS * 2 + BOARD_SIZE * 2 + SEPARATOR
-WINDOW_HEIGHT = BORDER_THICKNESS + BOARD_SIZE + UI_HEIGHT + TOP_PANEL
-
-#buttons
-BUTTON_W = config.BUTTON_W
-BUTTON_H = config.BUTTON_H
-GAP = config.BUTTON_GAP
-START_X = config.BUTTON_START_X
-
-UI_Y = BOARD_Y + BOARD_SIZE
-UI_Y_MIDPOINT = UI_Y + (UI_HEIGHT - BUTTON_H) // 2
 
 #tkinter windows
 def ask_string(title, label):
@@ -269,10 +202,19 @@ def ask_promo(title, message):
 pygame.init()
 
 font = pygame.font.SysFont(None, 28)
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.NOFRAME)
+screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
 pygame.display.set_caption(f"{title}")
-pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
 clock = pygame.time.Clock()
+
+#load & resize brand assets
+def resize(img, width):
+    w, h = img.get_size()
+    ratio = width / w
+    return pygame.transform.smoothscale(img, (int(w*ratio), int(h*ratio)))
+
+icon_img = resize(pygame.image.load(icon), iconsize)
+logo_img = resize(pygame.image.load(logo), logosize)
+namelogo_img = resize(pygame.image.load(namelogo), namelogosize)
 
 #sounds
 pygame.mixer.pre_init(44100, -16, 2, 512)
@@ -292,14 +234,15 @@ def Start_Game(path=None):
 def load_images(piece_set):
     images = {}
     for name in assets.piece_assets.values():
-        img = pygame.image.load(f"{piece_set}/{name}.{piece_file_format}").convert_alpha()
+        path = os.path.join(piece_set, f"{name}.{piece_file_format}")
+        img = pygame.image.load(path).convert_alpha()
         images[name] = pygame.transform.smoothscale(img, (SQ, SQ))
     return images
 
 #start
 Start_Game()
 SOUNDS["start"].play()
-PIECE_IMAGES = load_images(piece_set)
+PIECE_IMAGES = load_images(chosen_set)
 
 #define button classes
 class Button:
@@ -413,18 +356,18 @@ class ExpandableButton:
         return used
 
 #create buttons & expandable buttons
-save_button = Button((START_X + (BUTTON_W + GAP) * 0, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
-load_button = Button((START_X + (BUTTON_W + GAP) * 1, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
-undo_button = Button((START_X + (BUTTON_W + GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Undo", lambda: confirm_undo())
-restart_button = Button((START_X + (BUTTON_W + GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
-quit_button = Button((START_X + (BUTTON_W + GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
+save_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 0, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
+load_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 1, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Load", lambda: load_game_dialog())
+undo_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 2 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Undo", lambda: confirm_undo())
+restart_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 3 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Restart", lambda: confirm_restart())
+quit_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 4 , UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Quit", lambda: confirm_quit())
 
-palette_button = Button((START_X + (BUTTON_W + GAP) * 5, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette", lambda: None)
+palette_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 5, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Palette", lambda: None)
 palette_prev = Button((0, 0, BUTTON_W, BUTTON_H), "Previous", lambda: switch_palette(-1))
 palette_next = Button((0, 0, BUTTON_W, BUTTON_H), "Next", lambda: switch_palette(1))
 palette_menu = ExpandableButton(palette_button, [palette_prev, palette_next])
 
-pieces_button = Button((START_X + (BUTTON_W + GAP) * 6, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Pieces", lambda: None)
+pieces_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 6, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Pieces", lambda: None)
 pieces_prev = Button((0, 0, BUTTON_W, BUTTON_H), "Previous", lambda: switch_piece_set(-1))
 pieces_next = Button((0, 0, BUTTON_W, BUTTON_H), "Next", lambda: switch_piece_set(1))
 pieces_menu = ExpandableButton(pieces_button, [pieces_prev, pieces_next])
@@ -584,7 +527,7 @@ def screen_to_square(mx, my):
 
     return chr(ord('a') + file) + str(rank + 1)
 
-#drawing components
+#draw chess components
 def draw_board_at(offset_x, offset_y, flipped):
     for rank in range(8):
         for file in range(8):
@@ -701,6 +644,10 @@ def draw(end=None):
     pygame.draw.rect(screen, BORDER_COLOR, (0, 0, WINDOW_WIDTH, WINDOW_HEIGHT), BORDER_THICKNESS)
     #UI menu
     pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
+
+    #brand assets
+    # screen.blit(logo_img, (LOGO_x, LOGO_Y))
+    # screen.blit(namelogo_img, (NAMELOGO_X, NAMELOGO_Y))
 
     #UI buttons
     for button in buttons:

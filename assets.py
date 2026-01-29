@@ -4,6 +4,15 @@ import os
 #icon
 icon = "assets/brand/logo256.png"
 
+#brand
+logo = "assets/brand/logo256.png"
+namelogo = "assets/brand/name256.png"
+
+#sizes
+iconsize = 64
+logosize = 128
+namelogosize = 150
+
 #pieces
 piece_assets = {
     "wpawn" : "wP",
