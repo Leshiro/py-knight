@@ -7,7 +7,6 @@ author = "Leshiro"
 fps_limit = 20
 
 #get current monitor res
-pygame.init()
 info = pygame.display.Info()
 MONITOR_X, MONITOR_Y = info.current_w, info.current_h
 

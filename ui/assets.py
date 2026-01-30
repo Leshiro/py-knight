@@ -1,5 +1,8 @@
 #imports
 import os
+import pygame
+
+from ui.config import SQ
 
 #icon
 icon = "assets/brand/logo256.png"
@@ -28,6 +31,7 @@ piece_assets = {
     "bqueen" : "bQ",
     "bking" : "bK",
 }    
+
 piece_file_format = "png"
 
 default = "cburnett"
@@ -40,6 +44,14 @@ for name in os.listdir(piece_folder):
     path = os.path.join(piece_folder, name)
     if os.path.isdir(path):
         piece_sets.append(piece_folder + name)
+
+def load_pieces(piece_set):
+    images = {}
+    for name in piece_assets.values():
+        path = os.path.join(piece_set, f"{name}.{piece_file_format}")
+        img = pygame.image.load(path).convert_alpha()
+        images[name] = pygame.transform.smoothscale(img, (SQ, SQ))
+    return images
 
 def switch_piece_set(value):
     global chosen_set
@@ -60,3 +72,10 @@ sounds = {
     "castle": "castle.mp3",
     "promote" : "promote.mp3",
 }
+
+#sounds
+pygame.mixer.pre_init(44100, -16, 2, 512)
+pygame.mixer.init()
+SOUNDS = {}
+for sound in sounds:
+    SOUNDS.update({sound : pygame.mixer.Sound(f"{sound_folder}{sounds[sound]}")})

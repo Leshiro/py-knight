@@ -2,29 +2,30 @@
 import os
 import pygame
 
+pygame.init()
+
 #components
 import engine
 
+#ui
 import ui.assets as assets
 import ui.colors as colors
 import ui.widgets as widgets
 
 from ui.config import *
+from ui.assets import SOUNDS
 from ui.colors import LIGHT, DARK
 from ui.widgets import Button, ExpandableButton
 
 #tk
 import ui.tk as tk
 
-#pygame start
-pygame.init()
-
 font = pygame.font.SysFont(None, 28)
 screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
 pygame.display.set_caption(f"{title}")
 clock = pygame.time.Clock()
 
-#load & resize brand assets
+#load & resize assets
 def resize(img, width):
     w, h = img.get_size()
     ratio = width / w
@@ -34,33 +35,16 @@ icon_img = resize(pygame.image.load(assets.icon), assets.iconsize)
 logo_img = resize(pygame.image.load(assets.logo), assets.logosize)
 namelogo_img = resize(pygame.image.load(assets.namelogo), assets.namelogosize)
 
-#sounds
-pygame.mixer.pre_init(44100, -16, 2, 512)
-pygame.mixer.init()
-
-SOUNDS = {}
-for sound in assets.sounds:
-    SOUNDS.update({sound : pygame.mixer.Sound(f"{assets.sound_folder}{assets.sounds[sound]}")})
-
-#start functions
+#start
 def Start_Game(path=None):
     global end_notified
     end_notified = 0
     message, success = engine.load_game(path)
     return message, success
 
-def load_images(piece_set):
-    images = {}
-    for name in assets.piece_assets.values():
-        path = os.path.join(piece_set, f"{name}.{assets.piece_file_format}")
-        img = pygame.image.load(path).convert_alpha()
-        images[name] = pygame.transform.smoothscale(img, (SQ, SQ))
-    return images
-
-#start
 Start_Game()
 SOUNDS["start"].play()
-PIECE_IMAGES = load_images(assets.chosen_set)
+PIECE_IMAGES = assets.load_pieces(assets.chosen_set)
 
 #create buttons & expandable buttons
 save_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 0, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
@@ -92,60 +76,7 @@ expandable_menus = [
     pieces_menu,
     ]
 
-#ui functions
-def save_game_dialog():
-    path = tk.ask_file_save(title)
-    if not path:
-        return
-    else:
-        folder, filename = os.path.split(path)
-        folder_name = os.path.basename(folder)
-        engine.save_game(path)
-    tk.notify(title, f"Saved game to [{folder_name}/{filename}]")
-
-def load_game_dialog():
-    file = tk.ask_file_open(title)
-    if file:
-        message, success = Start_Game(file)
-        if message != None:
-            tk.notify(title, message)
-            if success:
-                SOUNDS["start"].play()
-
-def confirm_undo():
-    confirm = tk.ask_yes_no(title, "Undo move?")
-    if confirm == True:
-        exists = engine.undo_move()
-        global end_notified
-        end_notified = 0
-        if exists == 1:
-            SOUNDS["move"].play()
-        else:
-            tk.notify(title, "Previous move does not exist.")
-
-def confirm_restart():
-    confirm = tk.ask_yes_no(title, "Restart game?")
-    if confirm == True:
-        Start_Game()
-
-def confirm_quit():
-    confirm = tk.ask_yes_no(title, "Quit game?")
-    if confirm == True:
-        exit()
-
-def switch_palette(value):
-    board_colors = colors.switch_palette(value)
-    global LIGHT, DARK
-    LIGHT = board_colors[0]
-    DARK  = board_colors[1]
-
-def switch_piece_set(value):
-    global PIECE_IMAGES
-    piece_set = assets.switch_piece_set(value)
-    PIECE_IMAGES = load_images(piece_set)
-
-#engine related functions
-
+#engine connected
 def end_check(popup=0):
     player_data = engine.PlayerData[engine.turn]
     player = player_data["name"]
@@ -203,6 +134,58 @@ def make_move(move):
         SOUNDS["move"].play()
     return is_end
 
+#ui functions
+def save_game_dialog():
+    path = tk.ask_file_save(title)
+    if not path:
+        return
+    else:
+        folder, filename = os.path.split(path)
+        folder_name = os.path.basename(folder)
+        engine.save_game(path)
+    tk.notify(title, f"Saved game to [{folder_name}/{filename}]")
+
+def load_game_dialog():
+    file = tk.ask_file_open(title)
+    if file:
+        message, success = Start_Game(file)
+        if message != None:
+            tk.notify(title, message)
+            if success:
+                SOUNDS["start"].play()
+
+def confirm_undo():
+    confirm = tk.ask_yes_no(title, "Undo move?")
+    if confirm == True:
+        exists = engine.undo_move()
+        global end_notified
+        end_notified = 0
+        if exists == 1:
+            SOUNDS["move"].play()
+        else:
+            tk.notify(title, "Previous move does not exist.")
+
+def confirm_restart():
+    confirm = tk.ask_yes_no(title, "Restart game?")
+    if confirm == True:
+        Start_Game()
+
+def confirm_quit():
+    confirm = tk.ask_yes_no(title, "Quit game?")
+    if confirm == True:
+        exit()
+
+def switch_palette(value):
+    board_colors = colors.switch_palette(value)
+    global LIGHT, DARK
+    LIGHT = board_colors[0]
+    DARK  = board_colors[1]
+
+def switch_piece_set(value):
+    global PIECE_IMAGES
+    piece_set = assets.switch_piece_set(value)
+    PIECE_IMAGES = assets.load_pieces(piece_set)
+
 #sq2screen & screen2sq
 def square_to_screen(square, offset_x, offset_y, flipped):
     file = ord(square[0]) - ord('a')
@@ -235,7 +218,7 @@ def screen_to_square(mx, my):
 
     return chr(ord('a') + file) + str(rank + 1)
 
-#draw chess components
+#draw components
 def draw_board_at(offset_x, offset_y, flipped):
     for rank in range(8):
         for file in range(8):
