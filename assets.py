@@ -5,8 +5,8 @@ import os
 icon = "assets/brand/logo256.png"
 
 #brand
-logo = "assets/brand/logo256.png"
-namelogo = "assets/brand/name256.png"
+logo = "assets/brand/logo720.png"
+namelogo = "assets/brand/name800.png"
 
 #sizes
 iconsize = 64
