@@ -339,7 +339,7 @@ def draw(end=None):
     pygame.draw.rect(screen, colors.UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
 
     #brand assets
-    # screen.blit(logo_img, (LOGO_x, LOGO_Y))
+    # screen.blit(logo_img, (LOGO_X, LOGO_Y))
     # screen.blit(namelogo_img, (NAMELOGO_X, NAMELOGO_Y))
 
     #UI buttons
