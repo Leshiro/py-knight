@@ -42,6 +42,7 @@ def Start_Game(path=None):
     message, success = engine.load_game(path)
     return message, success
 
+#first time
 Start_Game()
 SOUNDS["start"].play()
 PIECE_IMAGES = assets.load_pieces(assets.chosen_set)
