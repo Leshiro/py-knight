@@ -362,6 +362,7 @@ while running:
             running = False
         
         ui_used = False #start with false
+        end = end_check(0)
 
         #handle button & menu events
         for button in buttons:
@@ -409,7 +410,7 @@ while running:
     for menu in expandable_menus:
         menu.update()  
 
-    draw(end)#draw game end (if true)
+    draw(end) #draw game end (if true)
 
     clock.tick(fps_limit) #fps limiter
 
