@@ -170,6 +170,7 @@ def confirm_restart():
     confirm = tk.ask_yes_no(title, "Restart game?")
     if confirm == True:
         Start_Game()
+        SOUNDS["start"].play()
 
 def confirm_quit():
     confirm = tk.ask_yes_no(title, "Quit game?")
