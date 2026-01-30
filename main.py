@@ -1,202 +1,20 @@
 #imports
-import engine
-import assets
-import colors
-
-from assets import *
-from colors import *
-from config import *
-
-import pygame
 import os
-import tkinter as tk
-from tkinter import filedialog
+import pygame
 
-#tkinter windows
-def ask_string(title, label):
-    result = {"value": None}
+#components
+import engine
 
-    text_size = len(label) * charpixel
-    size = minimum + text_size
+import ui.assets as assets
+import ui.colors as colors
+import ui.widgets as widgets
 
-    def submit():
-        result["value"] = entry.get()
-        root.destroy()
+from ui.config import *
+from ui.colors import LIGHT, DARK
+from ui.widgets import Button, ExpandableButton
 
-    root = tk.Tk()
-    root.title(title)
-    root.geometry(f"{size}x120")
-    root.resizable(False, False)
-
-    #center window
-    root.update_idletasks()
-    w = root.winfo_width()
-    h = root.winfo_height()
-    x = (root.winfo_screenwidth() - w) // 2
-    y = (root.winfo_screenheight() - h) // 2
-    root.geometry(f"{w}x{h}+{x}+{y}")
-
-    tk.Label(root, text=label, font=("Arial", 12)).pack(pady=10)
-    entry = tk.Entry(root, font=("Arial", 14))
-    entry.pack(padx=20, fill="x")
-    entry.focus()
-
-    entry.bind("<Return>", lambda event: submit())
-
-    tk.Button(root, text="OK", command=submit).pack(pady=10)
-
-    root.mainloop()
-
-    return result["value"]
-def ask_yes_no(title, message):
-    result = {"value": False}
-
-    text_size = len(message) * charpixel
-    size = minimum + text_size
-
-    def yes():
-        result["value"] = True
-        root.destroy()
-
-    def no():
-        root.destroy()
-        
-    root = tk.Tk()
-    root.title(title)
-    root.geometry(f"{size}x90")
-    root.resizable(False, False)
-
-    # center window
-    root.update_idletasks()
-    w = root.winfo_width()
-    h = root.winfo_height()
-    x = (root.winfo_screenwidth() - w) // 2
-    y = (root.winfo_screenheight() - h) // 2
-    root.geometry(f"{w}x{h}+{x}+{y}")
-
-    tk.Label(root, text=message, font=("Arial", 12)).pack(pady=10)
-
-    frame = tk.Frame(root)
-    frame.pack(pady=(5, 0))
-
-    tk.Button(frame, text="Yes", width=10, command=yes).pack(side="left", padx=10)
-    tk.Button(frame, text="No", width=10, command=no).pack(side="right", padx=10)
-
-    # keyboard support
-    root.bind("<Return>", lambda e: yes())
-    root.bind("<Escape>", lambda e: no())
-
-    root.mainloop()
-
-    return result["value"]
-def notify(title, label):
-    def close():
-        root.destroy()
-
-    text_size = len(label) * int(charpixel // 1.5)
-    size = minimum + text_size
-
-    root = tk.Tk()
-    root.title(title)
-    root.geometry(f"{size}x85")
-    root.resizable(False, False)
-
-    #center window
-    root.update_idletasks()
-    w = root.winfo_width()
-    h = root.winfo_height()
-    x = (root.winfo_screenwidth() - w) // 2
-    y = (root.winfo_screenheight() - h) // 2
-    root.geometry(f"{w}x{h}+{x}+{y}")
-
-    tk.Label(root, text=label, font=("Arial", 12)).pack(padx=10, pady=(10, 10))
-    tk.Button(root, text="OK", command=close).pack(pady=(0, 10))
-
-    root.bind("<Return>", lambda event: close())
-
-    root.mainloop()
-
-def ask_file_open(title, initial_dir=".", filetypes=(("Text files", "*.txt"),)):
-    result = {"value": None}
-
-    def choose():
-        result["value"] = filedialog.askopenfilename(
-            title=title,
-            initialdir=initial_dir,
-            filetypes=filetypes
-        )
-        root.destroy()
-
-    root = tk.Tk()
-    root.withdraw()
-    root.after(0, choose)
-    root.mainloop()
-
-    return result["value"]
-def ask_file_save(title, initial_dir=".", filetypes=(("Text files", "*.txt"),), defaultextension=".txt"):
-    result = {"value": None}
-
-    def choose():
-        result["value"] = filedialog.asksaveasfilename(
-            title=title,
-            initialdir=initial_dir,
-            filetypes=filetypes,
-            defaultextension=defaultextension
-        )
-        root.destroy()
-
-    root = tk.Tk()
-    root.withdraw()
-    root.after(0, choose)
-    root.mainloop()
-
-    return result["value"]
-
-def ask_promo(title, message):
-    result = {"value": None}
-
-    text_size = len(message) * charpixel
-    size = minimum + text_size
-
-    def queen():
-        result["value"] = "queen"
-        root.destroy()
-    def rook():
-        result["value"] = "rook"
-        root.destroy()
-    def bishop():
-        result["value"] = "bishop"
-        root.destroy()
-    def knight():
-        result["value"] = "knight"
-        root.destroy()
-        
-    root = tk.Tk()
-    root.title(title)
-    root.geometry(f"{size+100}x90")
-    root.resizable(False, False)
-
-    # center window
-    root.update_idletasks()
-    w = root.winfo_width()
-    h = root.winfo_height()
-    x = (root.winfo_screenwidth() - w) // 2
-    y = (root.winfo_screenheight() - h) // 2
-    root.geometry(f"{w}x{h}+{x}+{y}")
-
-    tk.Label(root, text=message, font=("Arial", 12)).pack(pady=10)
-
-    frame = tk.Frame(root)
-    frame.pack(pady=(5, 0))
-
-    tk.Button(frame, text="Queen", width=10, command=queen).pack(side="left", padx=5)
-    tk.Button(frame, text="Rook", width=10, command=rook).pack(side="left", padx=5)
-    tk.Button(frame, text="Bishop", width=10, command=bishop).pack(side="right", padx=5)
-    tk.Button(frame, text="Knight", width=10, command=knight).pack(side="right", padx=5)
-
-    root.mainloop()
-
-    return result["value"]
+#tk
+import ui.tk as tk
 
 #pygame start
 pygame.init()
@@ -212,17 +30,17 @@ def resize(img, width):
     ratio = width / w
     return pygame.transform.smoothscale(img, (int(w*ratio), int(h*ratio)))
 
-icon_img = resize(pygame.image.load(icon), iconsize)
-logo_img = resize(pygame.image.load(logo), logosize)
-namelogo_img = resize(pygame.image.load(namelogo), namelogosize)
+icon_img = resize(pygame.image.load(assets.icon), assets.iconsize)
+logo_img = resize(pygame.image.load(assets.logo), assets.logosize)
+namelogo_img = resize(pygame.image.load(assets.namelogo), assets.namelogosize)
 
 #sounds
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
 
 SOUNDS = {}
-for sound in sounds:
-    SOUNDS.update({sound : pygame.mixer.Sound(f"{sound_folder}{sounds[sound]}")})
+for sound in assets.sounds:
+    SOUNDS.update({sound : pygame.mixer.Sound(f"{assets.sound_folder}{assets.sounds[sound]}")})
 
 #start functions
 def Start_Game(path=None):
@@ -234,7 +52,7 @@ def Start_Game(path=None):
 def load_images(piece_set):
     images = {}
     for name in assets.piece_assets.values():
-        path = os.path.join(piece_set, f"{name}.{piece_file_format}")
+        path = os.path.join(piece_set, f"{name}.{assets.piece_file_format}")
         img = pygame.image.load(path).convert_alpha()
         images[name] = pygame.transform.smoothscale(img, (SQ, SQ))
     return images
@@ -242,118 +60,7 @@ def load_images(piece_set):
 #start
 Start_Game()
 SOUNDS["start"].play()
-PIECE_IMAGES = load_images(chosen_set)
-
-#define button classes
-class Button:
-    def __init__(self, rect, text, action):
-        self.rect = pygame.Rect(rect)
-        self.text = text
-        self.action = action
-        self.hovered = False
-        self.flash_t = 0
-
-    #update on hover
-    def update(self):
-        self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
-
-    #draw button
-    def draw(self, screen, font):
-        if self.hovered:
-            bg = (100, 100, 100) #hover color
-        else:
-            bg = (70, 70, 70)
-
-        pygame.draw.rect(screen, bg, self.rect)
-        pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
-
-        txt = font.render(self.text, True, (255, 255, 255))
-        screen.blit(txt, txt.get_rect(center=self.rect.center))
-
-    #do something on click
-    def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                self.action()
-                return True
-        return False
-    
-class ExpandableButton:
-    def __init__(self, main_button, child_buttons, padding=8, gap=8):
-        self.main_button = main_button
-        self.child_buttons = child_buttons
-        self.bg_color = UI_COLOR
-        self.padding = padding
-        self.gap = gap
-        self.expanded = False
-        self.menu_rect = pygame.Rect(0, 0, 0, 0)
-
-        # main click toggles
-        self.main_button.action = self.toggle
-        self.reposition_children()
-
-    def toggle(self):
-        self.expanded = not self.expanded
-
-    def reposition_children(self):
-        if not self.child_buttons:
-            self.menu_rect = pygame.Rect(0, 0, 0, 0)
-            return
-
-        #compute total width of children row
-        child_w = sum(b.rect.width for b in self.child_buttons)
-        total_gap = self.gap * (len(self.child_buttons) - 1)
-        row_w = child_w + total_gap
-        row_h = max(b.rect.height for b in self.child_buttons)
-
-        #background rect size (+ padding)
-        bg_w = row_w + self.padding * 2
-        bg_h = row_h + self.padding * 2
-
-        #place background above main, centered to main
-        bg_x = self.main_button.rect.centerx - bg_w // 2
-        bg_y = self.main_button.rect.top - bg_h - self.gap  # small gap above main
-        self.menu_rect = pygame.Rect(bg_x, bg_y, bg_w, bg_h)
-
-        #place children inside background
-        x = self.menu_rect.left + self.padding
-        y = self.menu_rect.top + self.padding + (row_h - self.child_buttons[0].rect.height) // 2
-
-        for b in self.child_buttons:
-            b.rect.topleft = (x, self.menu_rect.top + self.padding + (row_h - b.rect.height) // 2)
-            x += b.rect.width + self.gap
-
-    def update(self):
-        self.main_button.update()
-        if self.expanded:
-            for b in self.child_buttons:
-                b.update()
-
-    def draw(self, screen, font):
-        #draw menu first (behind buttons) then children, then main
-        if self.expanded:
-            pygame.draw.rect(screen, self.bg_color, self.menu_rect)
-            pygame.draw.rect(screen, (255, 255, 255), self.menu_rect, 2)
-
-            for b in self.child_buttons:
-                b.draw(screen, font)
-        self.main_button.draw(screen, font)
-
-    def handle_event(self, event):
-        used = False
-        if self.expanded:
-            for b in self.child_buttons:
-                if b.handle_event(event):
-                    return True  #consume click immediately
-        if self.main_button.handle_event(event):
-            return True
-        if event.type == pygame.MOUSEBUTTONDOWN and self.expanded:
-            if self.menu_rect.collidepoint(event.pos):
-                return True
-            if not self.main_button.rect.collidepoint(event.pos):
-                self.expanded = False
-                return True
-        return used
+PIECE_IMAGES = load_images(assets.chosen_set)
 
 #create buttons & expandable buttons
 save_button = Button((BUTTON_START_X + (BUTTON_W + BUTTON_GAP) * 0, UI_Y_MIDPOINT, BUTTON_W, BUTTON_H), "Save", lambda: save_game_dialog())
@@ -387,26 +94,26 @@ expandable_menus = [
 
 #ui functions
 def save_game_dialog():
-    path = ask_file_save(title, "Enter save file name:")
+    path = tk.ask_file_save(title)
     if not path:
         return
     else:
         folder, filename = os.path.split(path)
         folder_name = os.path.basename(folder)
         engine.save_game(path)
-    notify(title, f"Saved game to [{folder_name}/{filename}]")
+    tk.notify(title, f"Saved game to [{folder_name}/{filename}]")
 
 def load_game_dialog():
-    file = ask_file_open(title, "Load save file:")
+    file = tk.ask_file_open(title)
     if file:
         message, success = Start_Game(file)
         if message != None:
-            notify(title, message)
+            tk.notify(title, message)
             if success:
                 SOUNDS["start"].play()
 
 def confirm_undo():
-    confirm = ask_yes_no(title, "Undo move?")
+    confirm = tk.ask_yes_no(title, "Undo move?")
     if confirm == True:
         exists = engine.undo_move()
         global end_notified
@@ -414,15 +121,15 @@ def confirm_undo():
         if exists == 1:
             SOUNDS["move"].play()
         else:
-            notify(title, "Previous move does not exist.")
+            tk.notify(title, "Previous move does not exist.")
 
 def confirm_restart():
-    confirm = ask_yes_no(title, "Restart game?")
+    confirm = tk.ask_yes_no(title, "Restart game?")
     if confirm == True:
         Start_Game()
 
 def confirm_quit():
-    confirm = ask_yes_no(title, "Quit game?")
+    confirm = tk.ask_yes_no(title, "Quit game?")
     if confirm == True:
         exit()
 
@@ -450,9 +157,9 @@ def end_check(popup=0):
         end = True
         if popup == 1:
             if mate == 1:
-                notify(title, f"Checkmate! [{opponent}] wins the game.")
+                tk.notify(title, f"Checkmate! [{opponent}] wins the game.")
             if mate == 2:
-                notify(title, f"Stalemate! [{player}] has no moves to play.")
+                tk.notify(title, f"Stalemate! [{player}] has no moves to play.")
     return end
 
 def make_move(move):
@@ -474,7 +181,7 @@ def make_move(move):
     is_capture = engine.coords[edc] in opponent_pieces
     is_promotion = engine.promotion_check(stc, edc)
     if is_promotion:
-        new_piece = ask_promo(title, "Promote pawn to: ")
+        new_piece = tk.ask_promo(title, "Promote pawn to: ")
         engine.try_move(move, new_piece)
     else:
         engine.try_move(move)
@@ -496,6 +203,7 @@ def make_move(move):
         SOUNDS["move"].play()
     return is_end
 
+#sq2screen & screen2sq
 def square_to_screen(square, offset_x, offset_y, flipped):
     file = ord(square[0]) - ord('a')
     rank = int(square[1]) - 1
@@ -540,7 +248,7 @@ def draw_files_at(offset_x, offset_y, flipped):
     files = "abcdefgh"
     files = files[::-1] if flipped else files
     for file in range(8):
-        label = font.render(files[file], True, COORDS_COLOR)
+        label = font.render(files[file], True, colors.COORDS_COLOR)
         x = offset_x + file * SQ + SQ - label.get_width() - 2
         y = offset_y + 7 * SQ + SQ - label.get_height() - 2
         screen.blit(label, (x, y))
@@ -548,7 +256,7 @@ def draw_files_at(offset_x, offset_y, flipped):
 def draw_ranks_at(offset_x, offset_y, flipped):
     for rank in range(8):
         text =  str(rank + 1) if flipped else str(8 - rank)
-        label = font.render(text, True, COORDS_COLOR)
+        label = font.render(text, True, colors.COORDS_COLOR)
         x = offset_x + 2
         y = offset_y + rank * SQ + 2
         screen.blit(label, (x, y))
@@ -561,14 +269,14 @@ def draw_pieces_at(offset_x, offset_y, flipped):
     for square, piece in engine.coords.items():
         if piece != engine.empty:
             x, y = square_to_screen(square, offset_x, offset_y, flipped)
-            screen.blit(PIECE_IMAGES[piece_assets[piece]], (x, y))
+            screen.blit(PIECE_IMAGES[assets.piece_assets[piece]], (x, y))
 
 def draw_selection_at(offset_x, offset_y, flipped):
     if not selected_square:
         return
 
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
-    overlay.fill(SELECTION_COLOR)
+    overlay.fill(colors.SELECTION_COLOR)
 
     x, y = square_to_screen(selected_square, offset_x, offset_y, flipped)
     screen.blit(overlay, (x, y))
@@ -578,7 +286,7 @@ def last_move_at(offset_x, offset_y, flipped):
         return
 
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
-    overlay.fill(SELECTION_COLOR)
+    overlay.fill(colors.SELECTION_COLOR)
 
     x, y = square_to_screen(selected_square, offset_x, offset_y, flipped)
     screen.blit(overlay, (x, y))
@@ -588,7 +296,7 @@ def draw_checkmate_at(offset_x, offset_y, flipped):
     own_pieces = player_data["pieces"]
     selected_square = engine.get_king_cd(own_pieces)
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
-    overlay.fill(CHECKMATE_COLOR)
+    overlay.fill(colors.CHECKMATE_COLOR)
 
     x, y = square_to_screen(selected_square, offset_x, offset_y, flipped)
     screen.blit(overlay, (x, y))
@@ -602,7 +310,7 @@ def get_legal_targets(from_sq):
 
 def draw_legal_moves_at(offset_x, offset_y, flipped):
     overlay = pygame.Surface((SQ, SQ), pygame.SRCALPHA)
-    overlay.fill(LEGAL_MOVES_COLOR)
+    overlay.fill(colors.LEGAL_MOVES_COLOR)
 
     for sq in legal_targets:
         x, y = square_to_screen(sq, offset_x, offset_y, flipped)
@@ -610,7 +318,7 @@ def draw_legal_moves_at(offset_x, offset_y, flipped):
 
 #main draw function
 def draw(end=None):
-    screen.fill((UI_COLOR))
+    screen.fill((colors.BG_COLOR))
     #boards
     draw_board_at(BOARD_1_X, BOARD_Y, flipped=False)
     draw_board_at(BOARD_2_X, BOARD_Y, flipped=True)
@@ -641,9 +349,9 @@ def draw(end=None):
     draw_pieces_at(BOARD_2_X, BOARD_Y, flipped=True)
 
     #border
-    pygame.draw.rect(screen, BORDER_COLOR, (0, 0, WINDOW_WIDTH, WINDOW_HEIGHT), BORDER_THICKNESS)
+    pygame.draw.rect(screen, colors.BORDER_COLOR, (0, 0, WINDOW_WIDTH, WINDOW_HEIGHT), BORDER_THICKNESS)
     #UI menu
-    pygame.draw.rect(screen, UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
+    pygame.draw.rect(screen, colors.UI_COLOR, (0, UI_Y, WINDOW_WIDTH, UI_HEIGHT))
 
     #brand assets
     # screen.blit(logo_img, (LOGO_x, LOGO_Y))

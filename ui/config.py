@@ -11,10 +11,6 @@ pygame.init()
 info = pygame.display.Info()
 MONITOR_X, MONITOR_Y = info.current_w, info.current_h
 
-#tkinter windows
-minimum = 180
-charpixel = 6
-
 #constants
 BORDER_THICKNESS = 15
 SEPARATOR = 15
