@@ -5,7 +5,7 @@ import pygame
 pygame.init()
 
 #components
-import engine
+import engine.engine as engine
 
 #ui
 import ui.assets as assets
