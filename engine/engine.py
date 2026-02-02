@@ -2,7 +2,6 @@
 import os
 
 from engine.constant import *
-import engine.classes as classes
 
 #reader
 def read_variables(coords_list):
