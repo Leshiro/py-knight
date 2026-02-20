@@ -23,11 +23,13 @@ def write_variables():
     else:
         last_move_value = f"{last_move[0]}/{last_move[1]}"
     #write variables
-    variables = f"""turn={turn}
-moves={moves}
-king_moved={king_moved[1]}/{king_moved[2]}
-last_move={last_move_value}
----"""
+    variables = (
+        f"turn={turn}\n"
+        f"moves={moves}\n"
+        f"king_moved={king_moved[1]}/{king_moved[2]}\n"
+        f"last_move={last_move_value}\n"
+        f"---"
+    )
     return variables
 
 #load .txt files
