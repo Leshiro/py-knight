@@ -29,20 +29,26 @@ The goal of this project was to design & implement a complete chess game without
 - Undoing moves
 - Save & load functionality
 
-## How to Run
-1. Click on **Code**, then **Download ZIP** on this repository.
-2. Extract the ZIP file to a folder.
-3. If you don't have Pygame-ce installed:
-    - Open a terminal and navigate into the extracted folder: `cd extracted/folder/path`
-    - Install the required packages: `pip install -r requirements.txt`
-4. Open the folder and run `main.py`.
-    - Alternatively, run `main.pyw` to run the game without terminal (only on Windows).
+## Setup
+Clone the repository:
+``` bash
+git clone https://github.com/Leshiro/py-knight.git
+``` 
+Navigate into the installed folder:
+``` bash
+cd py-knight
+```
+Install dependencies:
+``` bash
+pip install -r requirements.txt
+```
+Run the game:
+``` bash
+python main.py
+```
+After setup, you can run the game by navigating to the installed folder in file explorer and running `main.py`.
 
-## How to Run (Alternative)
-1. Clone the repository: `git clone https://github.com/Leshiro/py-knight`
-2. Navigate into the project folder: `cd py-knight`
-3. Install the required packages: `pip install -r requirements.txt`
-4. Run the game: `python main.py`
+Alternatively, you can run the game without a terminal by running `main.pyw` (only on Windows).
 
 ## Contributions
 Contributions, reporting issues and feature requests are welcome. Feel free to submit an issue or open a pull request.
@@ -55,7 +61,6 @@ Contributions, reporting issues and feature requests are welcome. Feel free to s
 - Bot match
 - Online matchmaking
 - User accounts, elo system etc.
-
 
 ## Built With
 - Python: https://www.python.org/
