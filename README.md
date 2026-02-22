@@ -1,6 +1,7 @@
 # PyKnight
 
-![python](https://img.shields.io/badge/python-3.13-blue) ![pygame-ce](https://img.shields.io/badge/pygame--ce-2.5.6-green)
+![python](https://img.shields.io/badge/python-3.13-blue)
+![pygame-ce](https://img.shields.io/badge/pygame--ce-2.5.6-green)
 
 ![pyknight](assets/brand/name400.png)
 
@@ -8,6 +9,7 @@ A customizable chess game I made in Python as a solo hobby project.
 
 The goal of this project was to design & implement a complete chess game without using external chess libraries.
 
+## Preview
 ![preview1](assets/images/image1.png)
 
 ## Features
@@ -30,7 +32,7 @@ The goal of this project was to design & implement a complete chess game without
 ## How to Run
 1. Click on **Code**, then **Download ZIP** on this repository.
 2. Extract the ZIP file to a folder.
-3. If you don't have Pygame installed:
+3. If you don't have Pygame-ce installed:
     - Open a terminal and navigate into the extracted folder: `cd extracted/folder/path`
     - Install the required packages: `pip install -r requirements.txt`
 4. Open the folder and run `main.py`.
@@ -42,11 +44,10 @@ The goal of this project was to design & implement a complete chess game without
 3. Install the required packages: `pip install -r requirements.txt`
 4. Run the game: `python main.py`
 
-## Built With
-- [Python](https://www.python.org/)
-- [Pygame](https://www.pygame.org/)
+## Contributions
+Contributions, reporting issues and feature requests are welcome. Feel free to submit an issue or open a pull request.
 
-## Might Add Later
+## Possible improvements
 - Remove global state variables & switch to `State` class object
 - Split save/load functions to separate file
 - Piece points indicator
@@ -54,3 +55,8 @@ The goal of this project was to design & implement a complete chess game without
 - Bot match
 - Online matchmaking
 - User accounts, elo system etc.
+
+
+## Built With
+- Python: https://www.python.org/
+- Pygame-ce: https://github.com/pygame-community/pygame-ce
