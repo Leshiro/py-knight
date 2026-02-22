@@ -62,6 +62,12 @@ Contributions, reporting issues and feature requests are welcome. Feel free to s
 - Online matchmaking
 - User accounts, elo system etc.
 
+## Credits
+This project would not be possible without the following resources:
+- Lichess's open source piece images: https://github.com/lichess-org/lila/tree/master/public/piece
+- Pinetools's great SVG to PNG converter: https://pinetools.com/bulk-batch-svg-converter-viewer
+
+
 ## Built With
 - Python: https://www.python.org/
 - Pygame-ce: https://github.com/pygame-community/pygame-ce
