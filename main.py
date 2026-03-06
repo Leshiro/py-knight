@@ -226,7 +226,7 @@ def draw_board_at(offset_x, offset_y, flipped):
         for file in range(8):
             draw_file = 7 - file if flipped else file
             draw_rank = rank if flipped else 7 - rank
-            color = LIGHT if (rank + file) % 2 == 0 else DARK
+            color = DARK if (rank + file) % 2 == 0 else LIGHT
             pygame.draw.rect(screen, color, (offset_x + draw_file * SQ, offset_y + draw_rank * SQ, SQ, SQ))
 
 def draw_files_at(offset_x, offset_y, flipped):
