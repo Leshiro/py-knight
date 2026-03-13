@@ -220,7 +220,7 @@ def screen_to_square(mx, my):
 
     return chr(ord('a') + file) + str(rank + 1)
 
-#draw components
+#draw board
 def draw_board_at(offset_x, offset_y, flipped):
     for rank in range(8):
         for file in range(8):
@@ -229,6 +229,14 @@ def draw_board_at(offset_x, offset_y, flipped):
             color = DARK if (rank + file) % 2 == 0 else LIGHT
             pygame.draw.rect(screen, color, (offset_x + draw_file * SQ, offset_y + draw_rank * SQ, SQ, SQ))
 
+#draw pieces
+def draw_pieces_at(offset_x, offset_y, flipped):
+    for square, piece in engine.coords.items():
+        if piece != engine.empty:
+            x, y = square_to_screen(square, offset_x, offset_y, flipped)
+            screen.blit(PIECE_IMAGES[assets.piece_assets[piece]], (x, y))
+
+#draw coordinate labels
 def draw_files_at(offset_x, offset_y, flipped):
     files = "abcdefgh"
     files = files[::-1] if flipped else files
@@ -250,12 +258,7 @@ def draw_coordinates_at(offset_x, offset_y, flipped):
     draw_files_at(offset_x, offset_y, flipped)
     draw_ranks_at(offset_x, offset_y, flipped)
 
-def draw_pieces_at(offset_x, offset_y, flipped):
-    for square, piece in engine.coords.items():
-        if piece != engine.empty:
-            x, y = square_to_screen(square, offset_x, offset_y, flipped)
-            screen.blit(PIECE_IMAGES[assets.piece_assets[piece]], (x, y))
-
+#draw helpers
 def draw_selection_at(offset_x, offset_y, flipped):
     if not selected_square:
         return
