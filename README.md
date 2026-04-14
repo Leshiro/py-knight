@@ -5,7 +5,7 @@
 
 ![pyknight](assets/brand/name400.png)
 
-A customizable chess game I made in Python as a solo hobby project.
+A complete & customizable chess game I made in Python as a solo hobby project.
 
 The goal of this project was to design & implement a complete chess game without using external chess libraries.
 
